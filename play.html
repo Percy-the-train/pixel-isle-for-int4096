@@ -3,15 +3,66 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pixel Isle</title>
+<title>Pixel Isle — Detective</title>
 <style>
   html, body { margin: 0; height: 100%; background: #0b0b12; overflow: hidden; }
   body { display: flex; align-items: center; justify-content: center; }
-  canvas { image-rendering: pixelated; image-rendering: crisp-edges; background: #000; }
+  #wrap { position: relative; display: inline-block; line-height: normal; }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges; background: #000; display: block; }
+  .hidden { display: none !important; }
+  #solveBtn {
+    position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%);
+    font-family: monospace; font-size: 13px; padding: 8px 14px;
+    background: #3f6f3f; color: #f2e8c8; border: 1px solid #6fbf58;
+    border-radius: 3px; cursor: pointer; white-space: nowrap;
+  }
+  #solveBtn:hover { background: #4f8f4f; }
+  #modal {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.65);
+  }
+  #modalBox {
+    background: #14141d; border: 1px solid #3a3a4a; padding: 14px; width: 78%; max-width: 440px;
+    color: #f2e8c8; font-family: monospace; font-size: 12px; box-sizing: border-box;
+  }
+  #modalBox h3 { margin: 0 0 8px; color: #ffd24a; font-size: 13px; letter-spacing: 1px; }
+  #modalBox textarea {
+    width: 100%; height: 74px; background: #1c1c27; color: #f2e8c8; border: 1px solid #3a3a4a;
+    font-family: monospace; font-size: 12px; box-sizing: border-box; padding: 6px; resize: vertical;
+  }
+  #modalBox .row { display: flex; gap: 8px; margin-top: 8px; }
+  #modalBox button {
+    font-family: monospace; font-size: 12px; padding: 6px 12px; background: #23232f;
+    color: #f2e8c8; border: 1px solid #3a3a4a; cursor: pointer; border-radius: 2px;
+  }
+  #modalBox button:hover { background: #2e2e3d; }
+  #modalNote { margin-top: 8px; color: #8a8a9a; font-size: 11px; line-height: 1.5; }
+  #toast {
+    position: absolute; left: 50%; top: 10px; transform: translateX(-50%);
+    background: rgba(10,8,16,0.92); color: #ffd24a; font-family: monospace; font-size: 12px;
+    padding: 6px 10px; border: 1px solid #c9a25c; border-radius: 3px; opacity: 0;
+    transition: opacity .3s; pointer-events: none; white-space: nowrap;
+  }
+  #toast.show { opacity: 1; }
 </style>
 </head>
 <body>
-<canvas id="game"></canvas>
+<div id="wrap">
+  <canvas id="game"></canvas>
+  <button id="solveBtn" class="hidden">Explain the death</button>
+  <div id="modal" class="hidden">
+    <div id="modalBox">
+      <h3>WHY DID THE VICTIM DIE?</h3>
+      <textarea id="answerText" placeholder="Type your conclusion..."></textarea>
+      <div class="row">
+        <button id="submitAnswer">Submit</button>
+        <button id="cancelAnswer">Cancel</button>
+      </div>
+      <div id="modalNote"></div>
+    </div>
+  </div>
+  <div id="toast"></div>
+</div>
 <script src="game.js"></script>
 <script>
 (function () {
@@ -23,17 +74,44 @@
   canvas.width = PI.VIEW_W;
   canvas.height = PI.VIEW_H;
 
-  var S = PI.initStore();
-  PI.persist(S);
-
-  var world = PI.rowsToWorld(S.scenes[S.currentScene]);
-  var npcData = S.npcData;
-  var signData = S.signData;
-  var ent = PI.rebuild(world, npcData);
-
   var TILE = PI.TILE;
   var VIEW_W = PI.VIEW_W;
   var VIEW_H = PI.VIEW_H;
+
+  var S = PI.initStore();
+  var scenes = S.scenes;
+  var npcData = S.npcData;
+  var signData = S.signData;
+
+  function norm(s) { return (s || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
+
+  function pickScene(candidates, exclude) {
+    var names = Object.keys(scenes);
+    for (var c = 0; c < candidates.length; c++) {
+      for (var i = 0; i < names.length; i++) {
+        if (names[i] === exclude) continue;
+        if (norm(names[i]) === candidates[c]) return names[i];
+      }
+    }
+    for (var c2 = 0; c2 < candidates.length; c2++) {
+      for (var j = 0; j < names.length; j++) {
+        if (names[j] === exclude) continue;
+        if (norm(names[j]).indexOf(candidates[c2]) >= 0) return names[j];
+      }
+    }
+    return null;
+  }
+
+  var homeName = pickScene(["homeroom", "home", "startroom", "start", "room"]) || Object.keys(scenes)[0];
+  var murderName = pickScene(["murderscene", "mudersence", "muderscene", "murdersence", "murder", "muder", "crime", "crimescene"], homeName);
+  if (!murderName) {
+    var ks = Object.keys(scenes).filter(function (k) { return k !== homeName; });
+    murderName = ks.length ? ks[0] : homeName;
+  }
+
+  var current = homeName;
+  var world = PI.rowsToWorld(scenes[current]);
+  var ent = PI.rebuild(world, npcData);
 
   var state = "play";
   var dialogue = null;
@@ -41,10 +119,64 @@
   var keys = {};
   var player = { x: ent.spawn.x, y: ent.spawn.y, dir: "down", moving: false, frame: 0 };
 
-  var speed = 70, PH = 8, PW = 10, OX = 3, OY = 8;
+  var investigation = {
+    started: false,
+    solved: false,
+    answer: "",
+    clues: [],
+    seen: {}
+  };
+
+  var doorCooldown = 0;
+
+  var solveBtn = document.getElementById("solveBtn");
+  var modal = document.getElementById("modal");
+  var toastEl = document.getElementById("toast");
+  var modalNote = document.getElementById("modalNote");
+  var answerText = document.getElementById("answerText");
+
+  var toastTimer = null;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 2200);
+  }
+
+  function isMurder() { return current === murderName; }
+
+  function refreshUI() {
+    solveBtn.classList.toggle("hidden", !isMurder());
+    if (!isMurder()) modal.classList.add("hidden");
+  }
+
+  function goTo(name) {
+    current = name;
+    world = PI.rowsToWorld(scenes[name]);
+    ent = PI.rebuild(world, npcData);
+    player.x = ent.spawn.x; player.y = ent.spawn.y;
+    player.dir = "down"; player.moving = false; player.frame = 0;
+    dialogue = null;
+    doorCooldown = 0.5;
+    refreshUI();
+  }
+
+  function useDoor() {
+    if (current === homeName) {
+      investigation.started = true;
+      goTo(murderName);
+      toast("The investigation begins — find out why the victim died.");
+    } else if (current === murderName) {
+      goTo(homeName);
+      toast("You returned to the home room.");
+    }
+  }
 
   window.addEventListener("keydown", function (e) {
     var k = e.key.toLowerCase();
+    var typing = e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT");
+    if (k === "escape") { modal.classList.add("hidden"); keys = {}; return; }
+    if (typing) return;
     if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].indexOf(k) >= 0) e.preventDefault();
     keys[k] = true;
     if (k === "e" || k === "enter" || k === " ") interact();
@@ -54,8 +186,8 @@
   function solidAt(tx, ty) {
     if (tx < 0 || ty < 0 || tx >= ent.W || ty >= ent.H) return true;
     var c = world[ty][tx];
+    if (c === "D") return false;
     if (PI.SOLID_BASE[c]) return true;
-    if (c === "D" && ent.doorLocked) return true;
     return false;
   }
   function rectHit(ax, ay, aw, ah, bx, by, bw, bh) {
@@ -74,8 +206,35 @@
     return false;
   }
 
+  var speed = 70, PH = 8, PW = 10, OX = 3, OY = 8;
+
+  var INSPECT = { j: 1, k: 1, l: 1, m: 1, n: 1, K: 1, L: 1, G: 1, H: 1, J: 1, E: 1, Q: 1, A: 1, B: 1, x: 1, t: 1, y: 1, V: 1, c: 1, M: 1, I: 1, O: 1, e: 1, p: 1, d: 1 };
+
+  function labelFor(c) {
+    for (var i = 0; i < PI.PALETTE.length; i++) if (PI.PALETTE[i].c === c) return PI.PALETTE[i].label;
+    return "object";
+  }
+
+  function findNearInspect(radius) {
+    var px = Math.floor((player.x + 8) / TILE), py = Math.floor((player.y + 8) / TILE);
+    var best = null, bestD = 1e9;
+    for (var oy = -radius; oy <= radius; oy++)
+      for (var ox = -radius; ox <= radius; ox++) {
+        var tx = px + ox, ty = py + oy;
+        if (tx < 0 || ty < 0 || tx >= ent.W || ty >= ent.H) continue;
+        var c = world[ty][tx];
+        if (INSPECT[c]) {
+          var d = ox * ox + oy * oy;
+          if (d < bestD) { bestD = d; best = { x: tx, y: ty, c: c }; }
+        }
+      }
+    return best;
+  }
+
   function update(dt) {
-    if (state !== "play" || dialogue) return;
+    if (dialogue || !modal.classList.contains("hidden")) return;
+    if (doorCooldown > 0) doorCooldown -= dt;
+
     var dx = 0, dy = 0;
     if (keys["a"] || keys["arrowleft"]) dx = -1;
     if (keys["d"] || keys["arrowright"]) dx = 1;
@@ -96,19 +255,8 @@
     if (player.moving) player.frame = (Math.floor(performance.now() / 150)) % 2;
     else player.frame = 0;
 
-    var cx = Math.floor((player.x + 8) / TILE), cy = Math.floor((player.y + 12) / TILE);
-    for (var oy = -1; oy <= 1; oy++)
-      for (var ox = -1; ox <= 1; ox++) {
-        var tx = cx + ox, ty = cy + oy;
-        if (tx < 0 || ty < 0 || tx >= ent.W || ty >= ent.H) continue;
-        if (world[ty][tx] === "C") { world[ty][tx] = ent.ground; ent.coinsLeft--; }
-      }
-    if (ent.coinsLeft <= 0) ent.doorLocked = false;
-
-    if (!ent.doorLocked) {
-      var fcx = Math.floor((player.x + 8) / TILE), fcy = Math.floor((player.y + 8) / TILE);
-      if (world[fcy] && world[fcy][fcx] === "D") state = "won";
-    }
+    var fcx = Math.floor((player.x + 8) / TILE), fcy = Math.floor((player.y + 12) / TILE);
+    if (doorCooldown <= 0 && world[fcy] && world[fcy][fcx] === "D") useDoor();
   }
 
   function findNearTile(ch, radius) {
@@ -123,17 +271,31 @@
   }
 
   function interact() {
-    if (state === "won") return;
     if (dialogue) { dialIndex++; if (dialIndex >= dialogue.length) dialogue = null; return; }
+    if (modal.classList.contains("hidden") === false) return;
     for (var i = 0; i < ent.npcs.length; i++) {
       var n = ent.npcs[i];
       var dx = (n.x + 8) - (player.x + 8), dy = (n.y + 8) - (player.y + 8);
       if (dx * dx + dy * dy < 28 * 28) { openDialogue(n.lines); return; }
     }
+    if (isMurder()) {
+      var obj = findNearInspect(2);
+      if (obj) {
+        var ck = obj.x + "," + obj.y;
+        var lbl = labelFor(obj.c);
+        if (!investigation.seen[ck]) {
+          investigation.seen[ck] = true;
+          investigation.clues.push(ck);
+          toast("Clue found (" + investigation.clues.length + ")");
+          openDialogue(["You examine the " + lbl + ".", "Clue recorded. Clue details are coming soon."]);
+        } else {
+          openDialogue(["You've already examined the " + lbl + "."]);
+        }
+        return;
+      }
+    }
     var sign = findNearTile("S", 2);
     if (sign) { openDialogue([signData[sign.x + "," + sign.y] || "Nothing written here."]); return; }
-    var door = findNearTile("D", 2);
-    if (door && ent.doorLocked) openDialogue(["The door is locked...", "You still need " + ent.coinsLeft + " coin(s)."]);
   }
 
   function openDialogue(lines) { dialogue = lines; dialIndex = 0; }
@@ -152,7 +314,7 @@
     for (var ty = ty0; ty <= ty1; ty++)
       for (var tx = tx0; tx <= tx1; tx++) {
         if (tx < 0 || ty < 0 || tx >= ent.W || ty >= ent.H) continue;
-        PI.drawTile(ctx, world[ty][tx], tx, ty, tx * TILE - camX, ty * TILE - camY, ent.doorLocked, ent.ground);
+        PI.drawTile(ctx, world[ty][tx], tx, ty, tx * TILE - camX, ty * TILE - camY, false, ent.ground);
       }
 
     PI.drawBigChairs(ctx, world, tx0, ty0, tx1, ty1, camX, camY);
@@ -166,26 +328,15 @@
 
     drawHUD();
     if (dialogue) drawDialogue();
-    if (state === "won") drawWin();
   }
 
   function drawHUD() {
     ctx.font = "7px monospace";
     ctx.fillStyle = "#ffffff";
-    ctx.fillText("COINS " + ent.coinsLeft, 4, 9);
+    ctx.fillText(isMurder() ? "MURDER SCENE" : "HOME ROOM", 4, 9);
     ctx.fillStyle = "rgba(255,255,255,0.55)";
+    if (isMurder()) ctx.fillText("CLUES " + investigation.clues.length, 4, 19);
     ctx.fillText("WASD move  E talk", VIEW_W - 82, 9);
-  }
-
-  function wrap(text, max) {
-    var words = text.split(" "), lines = [], cur = "";
-    for (var i = 0; i < words.length; i++) {
-      var t = cur ? cur + " " + words[i] : words[i];
-      if (t.length > max) { if (cur) lines.push(cur); lines.push(words[i]); cur = ""; }
-      else cur = t;
-    }
-    if (cur) lines.push(cur);
-    return lines;
   }
 
   function drawDialogue() {
@@ -196,23 +347,39 @@
     ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
     ctx.fillStyle = "#f2e8c8";
     ctx.font = "7px monospace";
-    var lines = wrap(dialogue[dialIndex], 42);
-    for (var i = 0; i < lines.length && i < 3; i++) ctx.fillText(lines[i], bx + 6, by + 10 + i * 9);
+    var words = (dialogue[dialIndex] || "").split(" "), lines = [], cur = "";
+    for (var i = 0; i < words.length; i++) {
+      var t = cur ? cur + " " + words[i] : words[i];
+      if (t.length > 42) { if (cur) lines.push(cur); lines.push(words[i]); cur = ""; }
+      else cur = t;
+    }
+    if (cur) lines.push(cur);
+    for (var li = 0; li < lines.length && li < 3; li++) ctx.fillText(lines[li], bx + 6, by + 10 + li * 9);
     ctx.fillStyle = "#c9a25c";
     ctx.fillText("E to continue", bx + bw - 58, by + bh - 6);
   }
 
-  function drawWin() {
-    ctx.fillStyle = "rgba(0,0,0,0.7)";
-    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-    ctx.fillStyle = "#ffd24a";
-    ctx.font = "14px monospace";
-    ctx.fillText("YOU ESCAPED!", 88, 84);
-    ctx.fillStyle = "#f2e8c8";
-    ctx.font = "8px monospace";
-    ctx.fillText("You gathered every coin and unlocked the door.", 46, 102);
-    ctx.fillText("Reload the page to play again.", 98, 114);
-  }
+  solveBtn.addEventListener("click", function () {
+    if (!isMurder()) return;
+    keys = {};
+    modalNote.textContent = "Clues found: " + investigation.clues.length + ". Scoring will be added later.";
+    answerText.value = investigation.answer || "";
+    modal.classList.remove("hidden");
+    answerText.focus();
+  });
+  document.getElementById("cancelAnswer").addEventListener("click", function () {
+    keys = {};
+    modal.classList.add("hidden");
+  });
+  document.getElementById("submitAnswer").addEventListener("click", function () {
+    var txt = answerText.value.trim();
+    if (!txt) { answerText.focus(); return; }
+    investigation.answer = txt;
+    investigation.solved = true;
+    keys = {};
+    modal.classList.add("hidden");
+    toast("Conclusion recorded. (Scoring coming later.)");
+  });
 
   function resize() {
     var s = Math.max(1, Math.floor(Math.min(window.innerWidth / VIEW_W, window.innerHeight / VIEW_H)));
@@ -221,6 +388,7 @@
   }
   window.addEventListener("resize", resize);
   resize();
+  refreshUI();
 
   var last = performance.now();
   function loop(now) {
