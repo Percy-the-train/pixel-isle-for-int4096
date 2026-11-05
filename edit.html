@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Isle — Editor</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0b0b12; overflow: hidden; }
+  body { display: flex; color: #f2e8c8; font-family: monospace; }
+  #stage { flex: 1; display: flex; align-items: center; justify-content: center; min-width: 0; }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges; background: #000; cursor: crosshair; }
+  #sidebar {
+    width: 300px; background: #14141d; border-left: 1px solid #2a2a38;
+    overflow-y: auto; padding: 10px; box-sizing: border-box; flex: 0 0 300px;
+  }
+  h3 { margin: 12px 0 6px; font-size: 11px; color: #c9a25c; letter-spacing: 1px; text-transform: uppercase; }
+  h3:first-child { margin-top: 0; }
+  button, select, textarea { font-family: monospace; font-size: 11px; }
+  button {
+    background: #23232f; color: #f2e8c8; border: 1px solid #3a3a4a; padding: 5px 8px;
+    cursor: pointer; border-radius: 2px;
+  }
+  button:hover { background: #2e2e3d; }
+  #palette { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .tile-btn {
+    width: 100%; height: 34px; padding: 0; background: #1c1c27; border: 1px solid #2f2f3f;
+    position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .tile-btn:hover { border-color: #6fbf58; }
+  .tile-btn.selected { border-color: #ffd24a; outline: 1px solid #ffd24a; }
+  .tile-btn canvas { width: 22px; height: 22px; image-rendering: pixelated; }
+  .row { display: flex; gap: 6px; margin-top: 6px; align-items: center; }
+  .row select { flex: 1; background: #1c1c27; color: #f2e8c8; border: 1px solid #3a3a4a; padding: 4px; }
+  textarea {
+    width: 100%; box-sizing: border-box; background: #1c1c27; color: #f2e8c8;
+    border: 1px solid #3a3a4a; padding: 6px; resize: vertical; min-height: 64px;
+  }
+  #jsonArea { min-height: 80px; }
+  .hint { font-size: 10px; color: #8a8a9a; line-height: 1.5; margin-top: 8px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="game"></canvas></div>
+<div id="sidebar">
+  <h3>Scenes</h3>
+  <div class="row"><select id="sceneSelect"></select></div>
+  <div class="row">
+    <button id="sceneAdd">Add</button>
+    <button id="sceneRename">Rename</button>
+    <button id="sceneDelete">Delete</button>
+  </div>
+
+  <h3>Tools</h3>
+  <div class="row">
+    <button id="undoBtn">Undo</button>
+    <button id="redoBtn">Redo</button>
+  </div>
+  <div class="row">
+    <button id="mirrorH">Mirror &#8596;</button>
+    <button id="mirrorV">Mirror &#8597;</button>
+  </div>
+  <div class="row">
+    <button id="pickBtn">Pick</button>
+    <button id="fillAllBtn">Fill all</button>
+    <button id="clearBtn">Clear</button>
+  </div>
+
+  <h3>Objects</h3>
+  <div id="palette"></div>
+
+  <div id="inspector" class="hidden">
+    <h3 id="inspectorLabel">Object</h3>
+    <textarea id="inspectorText"></textarea>
+    <div class="row"><button id="inspectorApply">Apply</button></div>
+  </div>
+
+  <h3>Save / Load</h3>
+  <textarea id="jsonArea" placeholder="Scene data (JSON)"></textarea>
+  <div class="row">
+    <button id="exportBtn">Export</button>
+    <button id="importBtn">Import</button>
+    <button id="resetBtn">Reset</button>
+  </div>
+
+  <div class="hint">
+    <b>Edit controls:</b><br>
+    Click / drag: paint selected tile<br>
+    Right-click: erase<br>
+    Shift+click: edit object text<br>
+    WASD / arrows: pan the camera<br><br>
+    Open <b>play.html</b> to play your map.
+  </div>
+</div>
+
+<script src="game.js"></script>
+<script>
+(function () {
+  "use strict";
+  var PI = window.PI;
+
+  var canvas = document.getElementById("game");
+  var ctx = canvas.getContext("2d");
+  canvas.width = PI.VIEW_W;
+  canvas.height = PI.VIEW_H;
+
+  var TILE = PI.TILE;
+  var VIEW_W = PI.VIEW_W;
+  var VIEW_H = PI.VIEW_H;
+
+  var S = PI.initStore();
+  PI.persist(S);
+  var scenes = S.scenes;
+  var currentScene = S.currentScene;
+  var npcData = S.npcData;
+  var signData = S.signData;
+
+  var world = PI.rowsToWorld(scenes[currentScene]);
+  var ent = PI.rebuild(world, npcData);
+
+  var keys = {};
+  var camX = 0, camY = 0, editCamX = 0, editCamY = 0;
+  var panSpeed = 180;
+
+  window.addEventListener("keydown", function (e) {
+    var k = e.key.toLowerCase();
+    if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].indexOf(k) >= 0) e.preventDefault();
+    keys[k] = true;
+  });
+  window.addEventListener("keyup", function (e) { keys[e.key.toLowerCase()] = false; });
+
+  function updateEdit(dt) {
+    if (keys["a"] || keys["arrowleft"]) editCamX -= panSpeed * dt;
+    if (keys["d"] || keys["arrowright"]) editCamX += panSpeed * dt;
+    if (keys["w"] || keys["arrowup"]) editCamY -= panSpeed * dt;
+    if (keys["s"] || keys["arrowdown"]) editCamY += panSpeed * dt;
+  }
+
+  function render() {
+    ctx.fillStyle = "#0b0b12";
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+
+    camX = Math.max(0, Math.min(editCamX, ent.PXW - VIEW_W));
+    camY = Math.max(0, Math.min(editCamY, ent.PXH - VIEW_H));
+
+    var tx0 = Math.floor(camX / TILE), ty0 = Math.floor(camY / TILE);
+    var tx1 = Math.ceil((camX + VIEW_W) / TILE), ty1 = Math.ceil((camY + VIEW_H) / TILE);
+    for (var ty = ty0; ty <= ty1; ty++)
+      for (var tx = tx0; tx <= tx1; tx++) {
+        if (tx < 0 || ty < 0 || tx >= ent.W || ty >= ent.H) continue;
+        PI.drawTile(ctx, world[ty][tx], tx, ty, tx * TILE - camX, ty * TILE - camY, ent.doorLocked, ent.ground);
+      }
+
+    PI.drawBigChairs(ctx, world, tx0, ty0, tx1, ty1, camX, camY);
+
+    var ents = [{ y: ent.spawn.y, draw: function () { PI.drawChar(ctx, PI.playerSpriteDown, ent.spawn.x - camX, ent.spawn.y - camY); } }];
+    for (var i = 0; i < ent.npcs.length; i++) {
+      (function (n) { ents.push({ y: n.y, draw: function () { PI.drawChar(ctx, n.frames[0], n.x - camX, n.y - camY); } }); })(ent.npcs[i]);
+    }
+    ents.sort(function (a, b) { return a.y - b.y; });
+    for (var j = 0; j < ents.length; j++) ents[j].draw();
+
+    drawEditOverlay();
+  }
+
+  function drawEditOverlay() {
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(0, VIEW_H - 20, VIEW_W, 20);
+    ctx.font = "7px monospace";
+    ctx.fillStyle = "#ffd24a";
+    ctx.fillText("EDIT: " + selectedLabel, 4, VIEW_H - 8);
+    ctx.fillStyle = "#f2e8c8";
+    ctx.fillText("drag paint  right-click erase  shift+click edit", 4, VIEW_H - 8 + 9);
+  }
+
+  function resize() {
+    var stage = document.getElementById("stage");
+    var aw = stage.clientWidth, ah = stage.clientHeight;
+    var s = Math.max(1, Math.floor(Math.min(aw / VIEW_W, ah / VIEW_H)));
+    canvas.style.width = (VIEW_W * s) + "px";
+    canvas.style.height = (VIEW_H * s) + "px";
+  }
+  window.addEventListener("resize", resize);
+
+  var selectedTile = ".";
+  var selectedLabel = "Grass";
+  var paletteButtons = {};
+
+  function setSelectedTile(c, label) {
+    selectedTile = c;
+    selectedLabel = label || c;
+    Object.keys(paletteButtons).forEach(function (k) { paletteButtons[k].classList.remove("selected"); });
+    if (paletteButtons[c]) paletteButtons[c].classList.add("selected");
+  }
+
+  function buildPalette() {
+    var box = document.getElementById("palette");
+    box.innerHTML = "";
+    paletteButtons = {};
+    PI.PALETTE.forEach(function (item) {
+      var b = document.createElement("button");
+      b.className = "tile-btn";
+      b.title = item.label;
+      b.appendChild(PI.makeThumb(item.c));
+      b.addEventListener("click", function () { setSelectedTile(item.c, item.label); });
+      box.appendChild(b);
+      paletteButtons[item.c] = b;
+    });
+    if (paletteButtons[selectedTile]) paletteButtons[selectedTile].classList.add("selected");
+  }
+
+  function saveCurrentScene() {
+    scenes[currentScene] = PI.worldToRows(world);
+    PI.persist({ scenes: scenes, currentScene: currentScene, npcData: npcData, signData: signData });
+  }
+
+  var undoStack = [];
+  var redoStack = [];
+  var pickMode = false;
+
+  function snapshotRows() { return PI.worldToRows(world); }
+  function refreshAfterChange() { ent = PI.rebuild(world, npcData); saveCurrentScene(); }
+  function pushUndo() {
+    undoStack.push(snapshotRows());
+    if (undoStack.length > 80) undoStack.shift();
+    redoStack.length = 0;
+  }
+  function restoreRows(rows) { world = PI.rowsToWorld(rows); refreshAfterChange(); }
+  function doUndo() {
+    if (!undoStack.length) return;
+    redoStack.push(snapshotRows());
+    restoreRows(undoStack.pop());
+  }
+  function doRedo() {
+    if (!redoStack.length) return;
+    undoStack.push(snapshotRows());
+    restoreRows(redoStack.pop());
+  }
+  function mirrorH() {
+    pushUndo();
+    world = world.map(function (row) { return row.slice().reverse(); });
+    refreshAfterChange();
+  }
+  function mirrorV() {
+    pushUndo();
+    world = world.slice().reverse().map(function (row) { return row.slice(); });
+    refreshAfterChange();
+  }
+  function fillAll(tile) {
+    pushUndo();
+    for (var y = 0; y < ent.H; y++)
+      for (var x = 0; x < ent.W; x++) world[y][x] = tile;
+    refreshAfterChange();
+  }
+
+  document.getElementById("undoBtn").addEventListener("click", doUndo);
+  document.getElementById("redoBtn").addEventListener("click", doRedo);
+  document.getElementById("mirrorH").addEventListener("click", mirrorH);
+  document.getElementById("mirrorV").addEventListener("click", mirrorV);
+  document.getElementById("fillAllBtn").addEventListener("click", function () { fillAll(selectedTile); });
+  document.getElementById("clearBtn").addEventListener("click", function () { fillAll(ent.ground); });
+  document.getElementById("pickBtn").addEventListener("click", function () {
+    pickMode = !pickMode;
+    document.getElementById("pickBtn").classList.toggle("active", pickMode);
+  });
+
+  function clearChar(ch, to) {
+    for (var y = 0; y < ent.H; y++)
+      for (var x = 0; x < ent.W; x++)
+        if (world[y][x] === ch) world[y][x] = to;
+  }
+
+  function paint(tx, ty, c) {
+    if (tx < 0 || ty < 0 || tx >= ent.W || ty >= ent.H) return;
+    var key = tx + "," + ty;
+    if (c === "X") clearChar("X", ent.ground);
+    if (c === "N" && !npcData[key]) npcData[key] = ["Hello there!"];
+    if (c === "S" && !signData[key]) signData[key] = "A wooden sign. Write something with shift+click.";
+    world[ty][tx] = c;
+    ent = PI.rebuild(world, npcData);
+    saveCurrentScene();
+  }
+
+  var selected = null;
+
+  function inspectAt(tx, ty) {
+    if (tx < 0 || ty < 0 || tx >= ent.W || ty >= ent.H) return;
+    var c = world[ty][tx];
+    var key = tx + "," + ty;
+    var insp = document.getElementById("inspector");
+    var label = document.getElementById("inspectorLabel");
+    var ta = document.getElementById("inspectorText");
+    if (c === "N") {
+      selected = { type: "N", key: key };
+      label.textContent = "NPC dialogue (one message per line)";
+      ta.value = (npcData[key] || ["Hello!"]).join("\n");
+      insp.classList.remove("hidden");
+    } else if (c === "S") {
+      selected = { type: "S", key: key };
+      label.textContent = "Sign text";
+      ta.value = signData[key] || "";
+      insp.classList.remove("hidden");
+    } else {
+      selected = null;
+      insp.classList.add("hidden");
+    }
+  }
+
+  function canvasPos(e) {
+    var r = canvas.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * (VIEW_W / r.width), y: (e.clientY - r.top) * (VIEW_H / r.height) };
+  }
+  function tileAt(pos) {
+    return {
+      tx: Math.max(0, Math.min(ent.W - 1, Math.floor((pos.x + camX) / TILE))),
+      ty: Math.max(0, Math.min(ent.H - 1, Math.floor((pos.y + camY) / TILE)))
+    };
+  }
+
+  var painting = false;
+  canvas.addEventListener("mousedown", function (e) {
+    e.preventDefault();
+    var t = tileAt(canvasPos(e));
+    if (pickMode) {
+      var picked = world[t.ty][t.tx];
+      var found = PI.PALETTE.filter(function (p) { return p.c === picked; })[0];
+      setSelectedTile(picked, found ? found.label : picked);
+      pickMode = false;
+      document.getElementById("pickBtn").classList.remove("active");
+      return;
+    }
+    if (e.shiftKey) { inspectAt(t.tx, t.ty); return; }
+    pushUndo();
+    if (e.button === 2) { paint(t.tx, t.ty, ent.ground); return; }
+    painting = true;
+    paint(t.tx, t.ty, selectedTile);
+  });
+  window.addEventListener("mousemove", function (e) {
+    if (!painting) return;
+    var t = tileAt(canvasPos(e));
+    paint(t.tx, t.ty, selectedTile);
+  });
+  window.addEventListener("mouseup", function () { painting = false; });
+  canvas.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
+  function refreshSceneUI() {
+    var sel = document.getElementById("sceneSelect");
+    sel.innerHTML = "";
+    Object.keys(scenes).forEach(function (name) {
+      var o = document.createElement("option");
+      o.value = name; o.textContent = name;
+      if (name === currentScene) o.selected = true;
+      sel.appendChild(o);
+    });
+  }
+  function loadScene(name) {
+    currentScene = name;
+    world = PI.rowsToWorld(scenes[name]);
+    ent = PI.rebuild(world, npcData);
+    editCamX = 0; editCamY = 0;
+    undoStack.length = 0; redoStack.length = 0;
+    pickMode = false;
+    document.getElementById("pickBtn").classList.remove("active");
+    refreshSceneUI();
+    saveCurrentScene();
+  }
+
+  document.getElementById("sceneSelect").addEventListener("change", function (e) {
+    saveCurrentScene();
+    loadScene(e.target.value);
+  });
+  document.getElementById("sceneAdd").addEventListener("click", function () {
+    var name = prompt("Scene name:");
+    if (!name) return;
+    if (scenes[name]) { alert("A scene with that name already exists."); return; }
+    saveCurrentScene();
+    scenes[name] = PI.buildBlankRows();
+    loadScene(name);
+  });
+  document.getElementById("sceneRename").addEventListener("click", function () {
+    var name = prompt("New name for '" + currentScene + "':");
+    if (!name || name === currentScene) return;
+    if (scenes[name]) { alert("A scene with that name already exists."); return; }
+    scenes[name] = scenes[currentScene];
+    delete scenes[currentScene];
+    loadScene(name);
+  });
+  document.getElementById("sceneDelete").addEventListener("click", function () {
+    if (Object.keys(scenes).length <= 1) { alert("You need at least one scene."); return; }
+    delete scenes[currentScene];
+    loadScene(Object.keys(scenes)[0]);
+  });
+
+  document.getElementById("inspectorApply").addEventListener("click", function () {
+    if (!selected) return;
+    var ta = document.getElementById("inspectorText");
+    if (selected.type === "N") {
+      npcData[selected.key] = ta.value.split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
+    } else {
+      signData[selected.key] = ta.value;
+    }
+    ent = PI.rebuild(world, npcData);
+    saveCurrentScene();
+  });
+
+  document.getElementById("exportBtn").addEventListener("click", function () {
+    saveCurrentScene();
+    document.getElementById("jsonArea").value = JSON.stringify({ scenes: scenes, current: currentScene, npcData: npcData, signData: signData });
+  });
+  document.getElementById("importBtn").addEventListener("click", function () {
+    try {
+      var data = JSON.parse(document.getElementById("jsonArea").value);
+      if (!data.scenes) throw new Error("no scenes");
+      scenes = data.scenes;
+      currentScene = (data.current && scenes[data.current]) ? data.current : Object.keys(scenes)[0];
+      npcData = data.npcData || {};
+      signData = data.signData || {};
+      world = PI.rowsToWorld(scenes[currentScene]);
+      ent = PI.rebuild(world, npcData);
+      refreshSceneUI();
+      saveCurrentScene();
+    } catch (e) { alert("Import failed: " + e.message); }
+  });
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    if (!confirm("Reset all scenes to the default room and island?")) return;
+    scenes = {
+      "Holmes Study": PI.worldToRows(PI.buildHolmesWorld()),
+      "Island": PI.worldToRows(PI.buildIslandWorld())
+    };
+    npcData = PI.defaultNpcData();
+    signData = PI.defaultSignData();
+    loadScene("Holmes Study");
+  });
+
+  buildPalette();
+  refreshSceneUI();
+  resize();
+
+  var last = performance.now();
+  function loop(now) {
+    var dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    updateEdit(dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

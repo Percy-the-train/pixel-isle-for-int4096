@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Sprite Editor</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0b0b12; color: #f2e8c8; font-family: monospace; }
+  body { display: flex; overflow: hidden; }
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #toolbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 10px; border-bottom: 1px solid #2a2a38; background: #14141d; }
+  #toolbar button, #toolbar input, #toolbar select, #sidebar button, #sidebar input, #sidebar textarea {
+    font-family: monospace; font-size: 11px; background: #23232f; color: #f2e8c8;
+    border: 1px solid #3a3a4a; border-radius: 2px; padding: 5px 8px;
+  }
+  button { cursor: pointer; }
+  button:hover { background: #2e2e3d; }
+  button.active { background: #3f6f3f; border-color: #6fbf58; }
+  #toolbar .sep { width: 1px; height: 22px; background: #2a2a38; margin: 0 4px; }
+  #view { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 16px; }
+  #gridCanvas { image-rendering: pixelated; border: 1px solid #2a2a38; cursor: crosshair; }
+  #sidebar { width: 320px; background: #14141d; border-left: 1px solid #2a2a38; padding: 12px; box-sizing: border-box; overflow-y: auto; flex: 0 0 320px; }
+  h3 { margin: 14px 0 6px; font-size: 11px; color: #c9a25c; letter-spacing: 1px; text-transform: uppercase; }
+  h3:first-child { margin-top: 0; }
+  #swatches { display: flex; flex-wrap: wrap; gap: 4px; }
+  .swatch { display: inline-flex; align-items: center; gap: 4px; padding: 3px 6px; }
+  .swatch.selected { border-color: #ffd24a; outline: 1px solid #ffd24a; }
+  .swatch i { display: inline-block; width: 12px; height: 12px; border: 1px solid #000; }
+  .swatch .checker { background: repeating-conic-gradient(#555 0% 25%, #222 0% 50%) 0 0 / 8px 8px; }
+  .row { display: flex; gap: 6px; margin-top: 6px; align-items: center; }
+  .row input[type=number] { width: 56px; }
+  textarea { width: 100%; box-sizing: border-box; background: #1c1c27; color: #f2e8c8; border: 1px solid #3a3a4a; padding: 6px; resize: vertical; min-height: 90px; }
+  #preview { image-rendering: pixelated; border: 1px solid #2a2a38; background: repeating-conic-gradient(#333 0% 25%, #1a1a22 0% 50%) 0 0 / 16px 16px; }
+  .hint { font-size: 10px; color: #8a8a9a; line-height: 1.6; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div id="main">
+  <div id="toolbar">
+    <button id="toolPencil" class="active">Pencil</button>
+    <button id="toolFill">Fill</button>
+    <button id="toolPick">Pick</button>
+    <span class="sep"></span>
+    <button id="undo">Undo</button>
+    <button id="redo">Redo</button>
+    <button id="clear">Clear</button>
+    <span class="sep"></span>
+    <button id="zoomOut">-</button>
+    <span id="zoomLabel" style="min-width:46px;text-align:center;">20px</span>
+    <button id="zoomIn">+</button>
+    <span class="sep"></span>
+    <label>W <input id="gridW" type="number" min="1" max="64" value="16"></label>
+    <label>H <input id="gridH" type="number" min="1" max="64" value="16"></label>
+    <button id="resize">Resize</button>
+  </div>
+  <div id="view"><canvas id="gridCanvas"></canvas></div>
+</div>
+
+<div id="sidebar">
+  <h3>Palette</h3>
+  <div class="row">
+    <input id="colorInput" type="color" value="#e05050">
+    <button id="addColor">Add color</button>
+  </div>
+  <div id="swatches" style="margin-top:8px;"></div>
+  <div class="hint">Click a swatch to select. Double-click to remove. Change the color picker to edit the selected color.</div>
+
+  <h3>Preview</h3>
+  <canvas id="preview" width="16" height="16"></canvas>
+
+  <h3>Load from game</h3>
+  <div class="row"><select id="assetSelect"></select></div>
+  <div class="row"><button id="loadAsset">Load asset</button></div>
+  <div class="hint">Pick any tile, object, player frame, or NPC from game.js, edit it, then Copy code and paste it back into game.js.</div>
+
+  <h3>Load / Export</h3>
+  <textarea id="importArea" placeholder='Paste a sprite(...) block from index.html, e.g.&#10;sprite([&#10;"....",&#10;"...."&#10;], { K: "#000" })'></textarea>
+  <div class="row">
+    <button id="parseBtn">Load from code</button>
+    <button id="sampleBtn">Load coin sample</button>
+  </div>
+  <div class="row">
+    <label>Name <input id="nameInput" type="text" value="MY_SPRITE" style="width:120px;"></label>
+    <button id="copyBtn">Copy code</button>
+  </div>
+  <div class="row"><button id="copyRowsBtn">Copy rows array</button></div>
+  <textarea id="exportArea" placeholder="Generated code appears here."></textarea>
+  <div class="hint">Paste the generated <b>sprite([...], {...})</b> code over the matching sprite in <b>game.js</b>, then reload play.html.</div>
+</div>
+
+<script src="game.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var KEYCHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".split("");
+  var W = 16, H = 16, cell = 20;
+  var cells = [];
+  var palette = {};
+  var order = [];
+  var currentKey = null;
+  var tool = "pencil";
+  var prevTool = "pencil";
+  var history = [];
+  var histIndex = -1;
+  var drawing = false;
+
+  var canvas = document.getElementById("gridCanvas");
+  var ctx = canvas.getContext("2d");
+  var preview = document.getElementById("preview");
+  var pctx = preview.getContext("2d");
+
+  function emptyCells(nw, nh) {
+    return Array.from({ length: nh }, function () { return new Array(nw).fill(null); });
+  }
+
+  function nextKey() {
+    for (var i = 0; i < KEYCHARS.length; i++) if (palette[KEYCHARS[i]] === undefined) return KEYCHARS[i];
+    return null;
+  }
+
+  function snapshot() { return cells.map(function (r) { return r.slice(); }); }
+
+  function pushUndo() {
+    history = history.slice(0, histIndex + 1);
+    history.push(snapshot());
+    histIndex++;
+  }
+
+  function applyHistory() {
+    cells = history[histIndex].map(function (r) { return r.slice(); });
+    render();
+  }
+
+  function render() {
+    canvas.width = W * cell;
+    canvas.height = H * cell;
+    for (var y = 0; y < H; y++) {
+      for (var x = 0; x < W; x++) {
+        ctx.fillStyle = (x + y) % 2 === 0 ? "#23232e" : "#1b1b24";
+        ctx.fillRect(x * cell, y * cell, cell, cell);
+      }
+    }
+    for (var yy = 0; yy < H; yy++) {
+      for (var xx = 0; xx < W; xx++) {
+        var ch = cells[yy][xx];
+        if (ch !== null && palette[ch]) {
+          ctx.fillStyle = palette[ch];
+          ctx.fillRect(xx * cell, yy * cell, cell, cell);
+        }
+      }
+    }
+    ctx.strokeStyle = "rgba(255,255,255,0.07)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (var gx = 0; gx <= W; gx++) { ctx.moveTo(gx * cell + 0.5, 0); ctx.lineTo(gx * cell + 0.5, H * cell); }
+    for (var gy = 0; gy <= H; gy++) { ctx.moveTo(0, gy * cell + 0.5); ctx.lineTo(W * cell, gy * cell + 0.5); }
+    ctx.stroke();
+    updatePreview();
+  }
+
+  function updatePreview() {
+    preview.width = W;
+    preview.height = H;
+    preview.style.width = (W * 10) + "px";
+    preview.style.height = (H * 10) + "px";
+    pctx.clearRect(0, 0, W, H);
+    for (var y = 0; y < H; y++)
+      for (var x = 0; x < W; x++) {
+        var ch = cells[y][x];
+        if (ch !== null && palette[ch]) { pctx.fillStyle = palette[ch]; pctx.fillRect(x, y, 1, 1); }
+      }
+  }
+
+  function cellAt(e) {
+    var r = canvas.getBoundingClientRect();
+    var mx = (e.clientX - r.left) * (canvas.width / r.width);
+    var my = (e.clientY - r.top) * (canvas.height / r.height);
+    var x = Math.floor(mx / cell), y = Math.floor(my / cell);
+    if (x < 0 || y < 0 || x >= W || y >= H) return null;
+    return { x: x, y: y };
+  }
+
+  function paint(x, y) { cells[y][x] = currentKey; render(); }
+
+  function fill(x, y) {
+    var target = cells[y][x];
+    if (target === currentKey) return;
+    var stack = [[x, y]];
+    while (stack.length) {
+      var p = stack.pop();
+      var px = p[0], py = p[1];
+      if (px < 0 || py < 0 || px >= W || py >= H) continue;
+      if (cells[py][px] !== target) continue;
+      cells[py][px] = currentKey;
+      stack.push([px + 1, py], [px - 1, py], [px, py + 1], [px, py - 1]);
+    }
+    render();
+  }
+
+  canvas.addEventListener("mousedown", function (e) {
+    e.preventDefault();
+    var p = cellAt(e);
+    if (!p) return;
+    if (tool === "pick") {
+      var ch = cells[p.y][p.x];
+      currentKey = ch;
+      if (ch !== null && palette[ch]) document.getElementById("colorInput").value = palette[ch];
+      tool = prevTool;
+      updateToolButtons();
+      renderSwatches();
+      return;
+    }
+    pushUndo();
+    if (tool === "fill") fill(p.x, p.y);
+    else paint(p.x, p.y);
+    drawing = true;
+  });
+  canvas.addEventListener("mousemove", function (e) {
+    if (!drawing || tool !== "pencil") return;
+    var p = cellAt(e);
+    if (p) paint(p.x, p.y);
+  });
+  window.addEventListener("mouseup", function () { drawing = false; });
+  canvas.addEventListener("contextmenu", function (e) {
+    e.preventDefault();
+    var p = cellAt(e);
+    if (!p) return;
+    pushUndo();
+    cells[p.y][p.x] = null;
+    render();
+  });
+
+  function renderSwatches() {
+    var box = document.getElementById("swatches");
+    box.innerHTML = "";
+    function make(key, isEraser) {
+      var b = document.createElement("button");
+      b.className = "swatch" + (currentKey === key ? " selected" : "");
+      var i = document.createElement("i");
+      if (isEraser) i.className = "checker";
+      else i.style.background = palette[key];
+      b.appendChild(i);
+      b.appendChild(document.createTextNode(isEraser ? "." : key));
+      b.addEventListener("click", function () {
+        currentKey = key;
+        if (key !== null) document.getElementById("colorInput").value = palette[key];
+        renderSwatches();
+      });
+      if (!isEraser) {
+        b.addEventListener("dblclick", function () {
+          removeKey(key);
+        });
+      }
+      return b;
+    }
+    box.appendChild(make(null, true));
+    order.forEach(function (k) { box.appendChild(make(k, false)); });
+  }
+
+  function removeKey(k) {
+    delete palette[k];
+    order = order.filter(function (x) { return x !== k; });
+    for (var y = 0; y < H; y++)
+      for (var x = 0; x < W; x++)
+        if (cells[y][x] === k) cells[y][x] = null;
+    if (currentKey === k) currentKey = null;
+    renderSwatches();
+    render();
+  }
+
+  document.getElementById("addColor").addEventListener("click", function () {
+    var k = nextKey();
+    if (!k) { alert("No free palette keys."); return; }
+    palette[k] = document.getElementById("colorInput").value;
+    order.push(k);
+    currentKey = k;
+    renderSwatches();
+  });
+
+  document.getElementById("colorInput").addEventListener("input", function (e) {
+    if (currentKey !== null && palette[currentKey]) {
+      palette[currentKey] = e.target.value;
+      renderSwatches();
+      render();
+    }
+  });
+
+  function updateToolButtons() {
+    document.getElementById("toolPencil").classList.toggle("active", tool === "pencil");
+    document.getElementById("toolFill").classList.toggle("active", tool === "fill");
+    document.getElementById("toolPick").classList.toggle("active", tool === "pick");
+  }
+  function setTool(t) {
+    if (tool !== "pick") prevTool = tool;
+    tool = t;
+    updateToolButtons();
+  }
+  document.getElementById("toolPencil").addEventListener("click", function () { setTool("pencil"); });
+  document.getElementById("toolFill").addEventListener("click", function () { setTool("fill"); });
+  document.getElementById("toolPick").addEventListener("click", function () { setTool("pick"); });
+
+  document.getElementById("undo").addEventListener("click", function () {
+    if (histIndex <= 0) return;
+    histIndex--;
+    applyHistory();
+  });
+  document.getElementById("redo").addEventListener("click", function () {
+    if (histIndex >= history.length - 1) return;
+    histIndex++;
+    applyHistory();
+  });
+  document.getElementById("clear").addEventListener("click", function () {
+    pushUndo();
+    cells = emptyCells(W, H);
+    render();
+  });
+
+  function setZoom(z) {
+    cell = Math.max(2, Math.min(64, z));
+    document.getElementById("zoomLabel").textContent = cell + "px";
+    render();
+  }
+  document.getElementById("zoomIn").addEventListener("click", function () { setZoom(cell + 2); });
+  document.getElementById("zoomOut").addEventListener("click", function () { setZoom(cell - 2); });
+  document.getElementById("view").addEventListener("wheel", function (e) {
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    setZoom(cell + (e.deltaY < 0 ? 2 : -2));
+  });
+
+  document.getElementById("resize").addEventListener("click", function () {
+    var nw = parseInt(document.getElementById("gridW").value, 10) || 16;
+    var nh = parseInt(document.getElementById("gridH").value, 10) || 16;
+    nw = Math.max(1, Math.min(64, nw));
+    nh = Math.max(1, Math.min(64, nh));
+    var old = cells;
+    var nc = emptyCells(nw, nh);
+    for (var y = 0; y < nh; y++)
+      for (var x = 0; x < nw; x++)
+        if (old[y] && old[y][x] !== undefined) nc[y][x] = old[y][x];
+    cells = nc;
+    W = nw; H = nh;
+    pushUndo();
+    render();
+  });
+
+  function exportCode() {
+    var name = document.getElementById("nameInput").value.trim() || "MY_SPRITE";
+    var rows = cells.map(function (r) { return r.map(function (c) { return c === null ? "." : c; }).join(""); });
+    var pal = {};
+    order.forEach(function (k) { pal[k] = palette[k]; });
+    var lines = "var " + name + " = sprite([\n" +
+      rows.map(function (r) { return '  "' + r + '"'; }).join(",\n") +
+      "\n], " + JSON.stringify(pal) + ");";
+    return lines;
+  }
+
+  document.getElementById("copyBtn").addEventListener("click", function () {
+    document.getElementById("exportArea").value = exportCode();
+    var code = exportCode();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(function () { alert("Copied to clipboard."); });
+    } else {
+      document.getElementById("exportArea").select();
+      document.execCommand("copy");
+      alert("Copied to clipboard.");
+    }
+  });
+
+  function exportRows() {
+    var rows = cells.map(function (r) { return r.map(function (c) { return c === null ? "." : c; }).join(""); });
+    return "[\n" + rows.map(function (r) { return '  "' + r + '"'; }).join(",\n") + "\n]";
+  }
+
+  document.getElementById("copyRowsBtn").addEventListener("click", function () {
+    var code = exportRows();
+    document.getElementById("exportArea").value = code;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(function () { alert("Rows copied. Paste into the shape array (e.g. CH_DOWN) in game.js."); });
+    } else {
+      document.getElementById("exportArea").select();
+      document.execCommand("copy");
+      alert("Rows copied.");
+    }
+  });
+
+  function loadRows(rows, pal) {
+    H = rows.length;
+    W = rows[0].length;
+    cells = emptyCells(W, H);
+    for (var y = 0; y < H; y++)
+      for (var x = 0; x < rows[y].length; x++) {
+        var ch = rows[y][x];
+        cells[y][x] = ch === "." ? null : ch;
+      }
+    palette = {};
+    order = [];
+    Object.keys(pal).forEach(function (k) { palette[k] = pal[k]; order.push(k); });
+    for (var yy = 0; yy < H; yy++)
+      for (var xx = 0; xx < W; xx++) {
+        var c = cells[yy][xx];
+        if (c !== null && palette[c] === undefined) palette[c] = "#888888";
+      }
+    order = Object.keys(palette);
+    currentKey = order.length ? order[0] : null;
+    if (currentKey) document.getElementById("colorInput").value = palette[currentKey];
+    document.getElementById("gridW").value = W;
+    document.getElementById("gridH").value = H;
+    history = []; histIndex = -1;
+    renderSwatches();
+    render();
+  }
+
+  function parseSprite(text) {
+    var m = /sprite\(\s*\[([\s\S]*?)\]\s*,\s*\{([\s\S]*?)\}\s*\)/.exec(text);
+    if (!m) throw new Error("Could not find a sprite([...], {...}) block.");
+    var rows = [], rr, re = /"([^"]*)"/g;
+    while ((rr = re.exec(m[1]))) rows.push(rr[1]);
+    if (!rows.length) throw new Error("No rows found.");
+    var pal = {}, pr, pre = /["']?(\S)["']?\s*:\s*["']?(#?[0-9a-fA-F]{3,8})["']?/g;
+    while ((pr = pre.exec(m[2]))) {
+      var val = pr[2];
+      if (val.charAt(0) !== "#") val = "#" + val;
+      pal[pr[1]] = val;
+    }
+    return { rows: rows, pal: pal };
+  }
+
+  document.getElementById("parseBtn").addEventListener("click", function () {
+    try {
+      var r = parseSprite(document.getElementById("importArea").value);
+      loadRows(r.rows, r.pal);
+    } catch (e) { alert("Parse error: " + e.message); }
+  });
+
+  var COIN_SAMPLE = [
+    "................", "................", "................", "................",
+    "................", "................", "......KKKK......", ".....KYYYYK.....",
+    ".....KYwwYK.....", ".....KYWWYK.....", ".....KYYYYK.....", "......KKKK......",
+    "................", "................", "................", "................"
+  ];
+  var COIN_PAL = { K: "#8a5a1f", Y: "#ffd24a", w: "#f0a830", W: "#d98a1f" };
+  document.getElementById("sampleBtn").addEventListener("click", function () {
+    loadRows(COIN_SAMPLE, COIN_PAL);
+  });
+
+  function hex2(n) { var s = n.toString(16); return s.length < 2 ? ("0" + s) : s; }
+
+  function canvasToSprite(cv) {
+    var w = cv.width, h = cv.height;
+    var g = cv.getContext("2d");
+    var data = g.getImageData(0, 0, w, h).data;
+    var map = {}, pal = {}, used = {};
+    var rows = [];
+    for (var y = 0; y < h; y++) {
+      var line = "";
+      for (var x = 0; x < w; x++) {
+        var i = (y * w + x) * 4;
+        if (data[i + 3] === 0) { line += "."; continue; }
+        var hex = "#" + hex2(data[i]) + hex2(data[i + 1]) + hex2(data[i + 2]);
+        if (map[hex] === undefined) {
+          var k = null;
+          for (var c = 0; c < KEYCHARS.length; c++) {
+            if (!used[KEYCHARS[c]]) { k = KEYCHARS[c]; break; }
+          }
+          if (k === null) k = "z";
+          used[k] = true; map[hex] = k; pal[k] = hex;
+        }
+        line += map[hex];
+      }
+      rows.push(line);
+    }
+    return { rows: rows, pal: pal };
+  }
+
+  function buildAssetList() {
+    var sel = document.getElementById("assetSelect");
+    if (!window.PI || !window.PI.CATALOG) {
+      sel.innerHTML = "<option>game.js not loaded</option>";
+      return;
+    }
+    sel.innerHTML = "";
+    function add(name, group) {
+      var o = document.createElement("option");
+      o.value = name; o.textContent = group ? (group + " — " + name) : name;
+      sel.appendChild(o);
+    }
+    if (window.PI.RAW) {
+      Object.keys(window.PI.RAW).forEach(function (name) { add(name, "Character shape"); });
+    }
+    Object.keys(window.PI.CATALOG).forEach(function (name) { add(name, "Sprite"); });
+  }
+
+  document.getElementById("loadAsset").addEventListener("click", function () {
+    if (!window.PI) { alert("game.js didn't load."); return; }
+    var name = document.getElementById("assetSelect").value;
+    var raw = window.PI.RAW && window.PI.RAW[name];
+    if (raw) {
+      loadRows(raw.rows.map(function (r) { return r; }), JSON.parse(JSON.stringify(raw.pal)));
+      document.getElementById("nameInput").value =
+        name.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+      return;
+    }
+    var cv = window.PI.CATALOG && window.PI.CATALOG[name];
+    if (!cv) return;
+    var sp = canvasToSprite(cv);
+    loadRows(sp.rows, sp.pal);
+    document.getElementById("nameInput").value =
+      name.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  });
+
+  buildAssetList();
+
+  palette = { "0": "#000000", "1": "#ffffff", "2": "#e05050" };
+  order = ["0", "1", "2"];
+  currentKey = "2";
+  cells = emptyCells(W, H);
+  history = [snapshot()];
+  histIndex = 0;
+  document.getElementById("colorInput").value = palette["2"];
+
+  renderSwatches();
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Isle</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0b0b12; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center; }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges; background: #000; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script src="game.js"></script>
+<script>
+(function () {
+  "use strict";
+  var PI = window.PI;
+
+  var canvas = document.getElementById("game");
+  var ctx = canvas.getContext("2d");
+  canvas.width = PI.VIEW_W;
+  canvas.height = PI.VIEW_H;
+
+  var S = PI.initStore();
+  PI.persist(S);
+
+  var world = PI.rowsToWorld(S.scenes[S.currentScene]);
+  var npcData = S.npcData;
+  var signData = S.signData;
+  var ent = PI.rebuild(world, npcData);
+
+  var TILE = PI.TILE;
+  var VIEW_W = PI.VIEW_W;
+  var VIEW_H = PI.VIEW_H;
+
+  var state = "play";
+  var dialogue = null;
+  var dialIndex = 0;
+  var keys = {};
+  var player = { x: ent.spawn.x, y: ent.spawn.y, dir: "down", moving: false, frame: 0 };
+
+  var speed = 70, PH = 8, PW = 10, OX = 3, OY = 8;
+
+  window.addEventListener("keydown", function (e) {
+    var k = e.key.toLowerCase();
+    if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].indexOf(k) >= 0) e.preventDefault();
+    keys[k] = true;
+    if (k === "e" || k === "enter" || k === " ") interact();
+  });
+  window.addEventListener("keyup", function (e) { keys[e.key.toLowerCase()] = false; });
+
+  function solidAt(tx, ty) {
+    if (tx < 0 || ty < 0 || tx >= ent.W || ty >= ent.H) return true;
+    var c = world[ty][tx];
+    if (PI.SOLID_BASE[c]) return true;
+    if (c === "D" && ent.doorLocked) return true;
+    return false;
+  }
+  function rectHit(ax, ay, aw, ah, bx, by, bw, bh) {
+    return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+  }
+  function collides(x, y, w, h) {
+    var x0 = Math.floor(x / TILE), x1 = Math.floor((x + w - 1) / TILE);
+    var y0 = Math.floor(y / TILE), y1 = Math.floor((y + h - 1) / TILE);
+    for (var ty = y0; ty <= y1; ty++)
+      for (var tx = x0; tx <= x1; tx++)
+        if (solidAt(tx, ty)) return true;
+    for (var i = 0; i < ent.npcs.length; i++) {
+      var n = ent.npcs[i];
+      if (rectHit(x, y, w, h, n.x, n.y, n.w, n.h)) return true;
+    }
+    return false;
+  }
+
+  function update(dt) {
+    if (state !== "play" || dialogue) return;
+    var dx = 0, dy = 0;
+    if (keys["a"] || keys["arrowleft"]) dx = -1;
+    if (keys["d"] || keys["arrowright"]) dx = 1;
+    if (keys["w"] || keys["arrowup"]) dy = -1;
+    if (keys["s"] || keys["arrowdown"]) dy = 1;
+    player.moving = (dx !== 0 || dy !== 0);
+    if (dx !== 0 && dy !== 0) { dx *= 0.7071; dy *= 0.7071; }
+    if (dx !== 0) {
+      var nx = player.x + dx * speed * dt;
+      if (!collides(nx + OX, player.y + OY, PW, PH)) player.x = nx;
+      player.dir = dx < 0 ? "left" : "right";
+    }
+    if (dy !== 0) {
+      var ny = player.y + dy * speed * dt;
+      if (!collides(player.x + OX, ny + OY, PW, PH)) player.y = ny;
+      if (dx === 0) player.dir = dy < 0 ? "up" : "down";
+    }
+    if (player.moving) player.frame = (Math.floor(performance.now() / 150)) % 2;
+    else player.frame = 0;
+
+    var cx = Math.floor((player.x + 8) / TILE), cy = Math.floor((player.y + 12) / TILE);
+    for (var oy = -1; oy <= 1; oy++)
+      for (var ox = -1; ox <= 1; ox++) {
+        var tx = cx + ox, ty = cy + oy;
+        if (tx < 0 || ty < 0 || tx >= ent.W || ty >= ent.H) continue;
+        if (world[ty][tx] === "C") { world[ty][tx] = ent.ground; ent.coinsLeft--; }
+      }
+    if (ent.coinsLeft <= 0) ent.doorLocked = false;
+
+    if (!ent.doorLocked) {
+      var fcx = Math.floor((player.x + 8) / TILE), fcy = Math.floor((player.y + 8) / TILE);
+      if (world[fcy] && world[fcy][fcx] === "D") state = "won";
+    }
+  }
+
+  function findNearTile(ch, radius) {
+    var px = Math.floor((player.x + 8) / TILE), py = Math.floor((player.y + 8) / TILE);
+    for (var oy = -radius; oy <= radius; oy++)
+      for (var ox = -radius; ox <= radius; ox++) {
+        var tx = px + ox, ty = py + oy;
+        if (tx < 0 || ty < 0 || tx >= ent.W || ty >= ent.H) continue;
+        if (world[ty][tx] === ch) return { x: tx, y: ty };
+      }
+    return null;
+  }
+
+  function interact() {
+    if (state === "won") return;
+    if (dialogue) { dialIndex++; if (dialIndex >= dialogue.length) dialogue = null; return; }
+    for (var i = 0; i < ent.npcs.length; i++) {
+      var n = ent.npcs[i];
+      var dx = (n.x + 8) - (player.x + 8), dy = (n.y + 8) - (player.y + 8);
+      if (dx * dx + dy * dy < 28 * 28) { openDialogue(n.lines); return; }
+    }
+    var sign = findNearTile("S", 2);
+    if (sign) { openDialogue([signData[sign.x + "," + sign.y] || "Nothing written here."]); return; }
+    var door = findNearTile("D", 2);
+    if (door && ent.doorLocked) openDialogue(["The door is locked...", "You still need " + ent.coinsLeft + " coin(s)."]);
+  }
+
+  function openDialogue(lines) { dialogue = lines; dialIndex = 0; }
+
+  var camX = 0, camY = 0;
+
+  function render() {
+    ctx.fillStyle = "#0b0b12";
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+
+    camX = Math.max(0, Math.min(player.x + 8 - VIEW_W / 2, ent.PXW - VIEW_W));
+    camY = Math.max(0, Math.min(player.y - VIEW_H / 2, ent.PXH - VIEW_H));
+
+    var tx0 = Math.floor(camX / TILE), ty0 = Math.floor(camY / TILE);
+    var tx1 = Math.ceil((camX + VIEW_W) / TILE), ty1 = Math.ceil((camY + VIEW_H) / TILE);
+    for (var ty = ty0; ty <= ty1; ty++)
+      for (var tx = tx0; tx <= tx1; tx++) {
+        if (tx < 0 || ty < 0 || tx >= ent.W || ty >= ent.H) continue;
+        PI.drawTile(ctx, world[ty][tx], tx, ty, tx * TILE - camX, ty * TILE - camY, ent.doorLocked, ent.ground);
+      }
+
+    PI.drawBigChairs(ctx, world, tx0, ty0, tx1, ty1, camX, camY);
+
+    var ents = [{ y: player.y, draw: function () { PI.drawChar(ctx, PI.playerFrames[player.dir][player.frame], player.x - camX, player.y - camY); } }];
+    for (var i = 0; i < ent.npcs.length; i++) {
+      (function (n) { ents.push({ y: n.y, draw: function () { PI.drawChar(ctx, n.frames[0], n.x - camX, n.y - camY); } }); })(ent.npcs[i]);
+    }
+    ents.sort(function (a, b) { return a.y - b.y; });
+    for (var j = 0; j < ents.length; j++) ents[j].draw();
+
+    drawHUD();
+    if (dialogue) drawDialogue();
+    if (state === "won") drawWin();
+  }
+
+  function drawHUD() {
+    ctx.font = "7px monospace";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText("COINS " + ent.coinsLeft, 4, 9);
+    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    ctx.fillText("WASD move  E talk", VIEW_W - 82, 9);
+  }
+
+  function wrap(text, max) {
+    var words = text.split(" "), lines = [], cur = "";
+    for (var i = 0; i < words.length; i++) {
+      var t = cur ? cur + " " + words[i] : words[i];
+      if (t.length > max) { if (cur) lines.push(cur); lines.push(words[i]); cur = ""; }
+      else cur = t;
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  }
+
+  function drawDialogue() {
+    var bx = 8, by = VIEW_H - 44, bw = VIEW_W - 16, bh = 36;
+    ctx.fillStyle = "rgba(10,8,16,0.92)";
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.strokeStyle = "#e0bd79";
+    ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
+    ctx.fillStyle = "#f2e8c8";
+    ctx.font = "7px monospace";
+    var lines = wrap(dialogue[dialIndex], 42);
+    for (var i = 0; i < lines.length && i < 3; i++) ctx.fillText(lines[i], bx + 6, by + 10 + i * 9);
+    ctx.fillStyle = "#c9a25c";
+    ctx.fillText("E to continue", bx + bw - 58, by + bh - 6);
+  }
+
+  function drawWin() {
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    ctx.fillStyle = "#ffd24a";
+    ctx.font = "14px monospace";
+    ctx.fillText("YOU ESCAPED!", 88, 84);
+    ctx.fillStyle = "#f2e8c8";
+    ctx.font = "8px monospace";
+    ctx.fillText("You gathered every coin and unlocked the door.", 46, 102);
+    ctx.fillText("Reload the page to play again.", 98, 114);
+  }
+
+  function resize() {
+    var s = Math.max(1, Math.floor(Math.min(window.innerWidth / VIEW_W, window.innerHeight / VIEW_H)));
+    canvas.style.width = (VIEW_W * s) + "px";
+    canvas.style.height = (VIEW_H * s) + "px";
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  var last = performance.now();
+  function loop(now) {
+    var dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    update(dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
