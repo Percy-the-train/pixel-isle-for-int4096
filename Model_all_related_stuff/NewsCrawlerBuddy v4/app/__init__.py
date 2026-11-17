@@ -1,0 +1,1 @@
+"""NewsCrawler Buddy backend package."""
