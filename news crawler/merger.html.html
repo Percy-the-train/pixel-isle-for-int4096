@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-HK"><head><meta charset="utf-8">
+<title>CSV / JSON Merger</title>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<style>
+body{font-family:system-ui,sans-serif;max-width:1100px;margin:20px auto;padding:0 12px;color:#222}
+fieldset{margin:12px 0;border:1px solid #ccc;border-radius:8px}
+label{display:inline-block;margin:4px 12px 4px 0}
+input,select{padding:4px}button{padding:6px 14px;margin-right:6px;cursor:pointer}
+table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #ddd;padding:4px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#prev{overflow:auto;max-height:420px}
+</style></head><body>
+<h2>CSV / JSON 合併工具</h2>
+
+<fieldset><legend>1. 選擇檔案(可多選)</legend>
+<input type="file" id="files" accept=".csv,.json,.jsonl,.ndjson" multiple>
+<div id="flist"></div></fieldset>
+
+<fieldset><legend>2. 欄位對應(改成同名即合併為一欄)</legend>
+<div id="cols">尚未載入檔案</div></fieldset>
+
+<fieldset><legend>3. 選項</legend>
+<label><input type="checkbox" id="oSrc" checked>加入 source_file 欄位</label>
+<label><input type="checkbox" id="oEmpty" checked>刪除全空白行</label>
+<label><input type="checkbox" id="oTrim" checked>去除文字前後空白</label><br>
+<label>去重欄位(輸出欄位名,逗號分隔,留空=整行) <input id="dKeys" size="26"></label>
+<label><input type="checkbox" id="oDedupe">啟用去重</label>
+<label>保留 <select id="dKeep"><option value="first">先出現</option><option value="last">後出現</option></select></label>
+</fieldset>
+
+<fieldset><legend>4. 執行與匯出</legend>
+<button id="bMerge">合併</button>
+<button id="bCsv">下載 CSV</button><button id="bJson">下載 JSON</button><button id="bJsonl">下載 JSONL</button>
+<div id="stat" style="margin-top:8px"></div></fieldset>
+<div id="prev"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+let datasets=[],merged=[],outCols=[];
+
+function toRows(name,text){
+ if(/\.csv$/i.test(name)){
+  const r=Papa.parse(text.replace(/^\ufeff/,""),{header:true,skipEmptyLines:true});
+  return r.data;
+ }
+ let t=text.replace(/^\ufeff/,"").trim(),data;
+ try{data=JSON.parse(t)}catch(e){
+  data=t.split(/\r?\n/).filter(x=>x.trim()).map(x=>JSON.parse(x));
+ }
+ if(!Array.isArray(data)){
+  const k=Object.keys(data).find(k=>Array.isArray(data[k]));
+  data=k?data[k]:[data];
+ }
+ return data.map(o=>(o&&typeof o==="object"&&!Array.isArray(o))?o:{value:o});
+}
+function cell(v){
+ if(v===null||v===undefined)return "";
+ return typeof v==="object"?JSON.stringify(v):String(v);
+}
+
+$("files").onchange=async e=>{
+ datasets=[];
+ for(const f of e.target.files){
+  try{
+   const rows=toRows(f.name,await f.text());
+   const cols=[...new Set(rows.flatMap(r=>Object.keys(r)))];
+   datasets.push({name:f.name,rows,cols});
+  }catch(err){alert(f.name+" 讀取失敗: "+err.message)}
+ }
+ $("flist").innerHTML="<ul>"+datasets.map(d=>`<li>${d.name}: ${d.rows.length} 行,${d.cols.length} 欄</li>`).join("")+"</ul>";
+ buildCols();
+};
+
+function buildCols(){
+ const all=[...new Set(datasets.flatMap(d=>d.cols))];
+ $("cols").innerHTML="<table><tr><th>保留</th><th>原欄位</th><th>輸出名稱</th><th>出現在</th></tr>"+
+ all.map((c,i)=>{
+  const where=datasets.map((d,j)=>d.cols.includes(c)?(j+1):null).filter(x=>x).join(",");
+  return `<tr><td><input type="checkbox" class="keep" checked></td><td class="orig">${c}</td>
+  <td><input class="newn" value="${c.replace(/"/g,"&quot;")}"></td><td>檔案 ${where}</td></tr>`}).join("")+"</table>";
+}
+
+function mapping(){
+ const m={};
+ const keeps=document.querySelectorAll(".keep"),origs=document.querySelectorAll(".orig"),news=document.querySelectorAll(".newn");
+ keeps.forEach((k,i)=>{if(k.checked&&news[i].value.trim())m[origs[i].textContent]=news[i].value.trim()});
+ return m;
+}
+
+$("bMerge").onclick=()=>{
+ if(!datasets.length)return alert("請先選擇檔案");
+ const m=mapping();
+ outCols=[...new Set(Object.values(m))];
+ if($("oSrc").checked&&!outCols.includes("source_file"))outCols.push("source_file");
+ let out=[];
+ for(const d of datasets)for(const r of d.rows){
+  const o={};outCols.forEach(c=>o[c]="");
+  for(const k in r){
+   const to=m[k];if(!to)continue;
+   let v=cell(r[k]);if($("oTrim").checked)v=v.trim();
+   if(o[to]==="")o[to]=v;
+  }
+  if($("oSrc").checked)o.source_file=d.name;
+  out.push(o);
+ }
+ const total=out.length;
+ if($("oEmpty").checked)out=out.filter(o=>outCols.some(c=>c!=="source_file"&&o[c]!==""));
+ const afterEmpty=out.length;
+ if($("oDedupe").checked){
+  const keys=$("dKeys").value.split(",").map(s=>s.trim()).filter(Boolean);
+  const use=keys.length?keys:outCols.filter(c=>c!=="source_file");
+  const bad=use.filter(k=>!outCols.includes(k));
+  if(bad.length)return alert("找不到去重欄位: "+bad.join(", "));
+  const map=new Map(),list=$("dKeep").value==="first"?out:[...out].reverse();
+  for(const o of list){const key=JSON.stringify(use.map(k=>o[k]));if(!map.has(key))map.set(key,o)}
+  out=[...map.values()];
+  if($("dKeep").value==="last")out.reverse();
+ }
+ merged=out;
+ $("stat").textContent=`原始 ${total} 行 → 刪除空白後 ${afterEmpty} 行 → 去重後 ${merged.length} 行,共 ${outCols.length} 欄`;
+ $("prev").innerHTML="<table><tr>"+outCols.map(c=>`<th>${c}</th>`).join("")+"</tr>"+
+  merged.slice(0,50).map(o=>"<tr>"+outCols.map(c=>`<td title="${String(o[c]).replace(/"/g,"&quot;")}">${String(o[c]).replace(/</g,"&lt;").slice(0,120)}</td>`).join("")+"</tr>").join("")+"</table>";
+};
+
+function dl(name,content,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click()}
+function need(){if(!merged.length){alert("請先按「合併」");return false}return true}
+$("bCsv").onclick=()=>need()&&dl("merged.csv","\ufeff"+Papa.unparse({fields:outCols,data:merged.map(o=>outCols.map(c=>o[c]))}),"text/csv");
+$("bJson").onclick=()=>need()&&dl("merged.json",JSON.stringify(merged,null,1),"application/json");
+$("bJsonl").onclick=()=>need()&&dl("merged.jsonl",merged.map(o=>JSON.stringify(o)).join("\n"),"application/json");
+</script></body></html>
