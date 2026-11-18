@@ -44,12 +44,41 @@
     transition: opacity .3s; pointer-events: none; white-space: nowrap;
   }
   #toast.show { opacity: 1; }
+  .lookSelect {
+    position: absolute; top: 30px; right: 10px; font-family: monospace; font-size: 11px;
+    background: #1c1c2a; color: #f2e8c8; border: 1px solid #3a3a4a; padding: 2px 4px; border-radius: 2px;
+  }
+  #hud { position: absolute; inset: 0; pointer-events: none; font-family: monospace; }
+  #hudScene { position: absolute; top: 8px; left: 10px; font-size: 14px; font-weight: bold; color: #ffd24a; letter-spacing: 1px; text-shadow: 0 1px 2px #000, 0 0 4px #000; }
+  #hudClues { position: absolute; top: 29px; left: 10px; font-size: 12px; color: #f2e8c8; text-shadow: 0 1px 2px #000, 0 0 4px #000; }
+  #hudHint { position: absolute; top: 9px; right: 10px; font-size: 11px; color: #d8d8e0; text-shadow: 0 1px 2px #000, 0 0 4px #000; }
+  #dialogue {
+    position: absolute; left: 8px; right: 8px; bottom: 52px;
+    background: rgba(10,8,16,0.94); border: 1px solid #e0bd79; border-radius: 3px;
+    padding: 10px 12px; font-family: monospace; color: #f2e8c8; font-size: 13px;
+    line-height: 1.45; pointer-events: none;
+  }
+  #dialogueHint { margin-top: 6px; text-align: right; color: #c9a25c; font-size: 11px; }
 </style>
 </head>
 <body>
 <div id="wrap">
   <canvas id="game"></canvas>
+  <div id="hud">
+    <div id="hudScene">HOME ROOM</div>
+    <div id="hudClues"></div>
+    <div id="hudHint">WASD move &middot; E interact</div>
+  </div>
+  <div id="dialogue" class="hidden">
+    <div id="dialogueText"></div>
+    <div id="dialogueHint">E to continue</div>
+  </div>
   <button id="solveBtn" class="hidden">Explain the death</button>
+  <select id="lookSelect" class="lookSelect" title="Player look">
+    <option value="Percy">Percy</option>
+    <option value="Male">Male</option>
+    <option value="Female">Female</option>
+  </select>
   <div id="modal" class="hidden">
     <div id="modalBox">
       <h3>WHY DID THE VICTIM DIE?</h3>
@@ -70,18 +99,32 @@
   var PI = window.PI;
 
   var canvas = document.getElementById("game");
-  var ctx = canvas.getContext("2d");
-  canvas.width = PI.VIEW_W;
-  canvas.height = PI.VIEW_H;
-
   var TILE = PI.TILE;
   var VIEW_W = PI.VIEW_W;
   var VIEW_H = PI.VIEW_H;
+  var RENDER_SCALE = 2;
+
+  canvas.width = VIEW_W * RENDER_SCALE;
+  canvas.height = VIEW_H * RENDER_SCALE;
+  var ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+  ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
 
   var S = PI.initStore();
   var scenes = S.scenes;
   var npcData = S.npcData;
   var signData = S.signData;
+
+  var look = "Percy";
+  try { look = localStorage.getItem("pixelisle.look") || "Percy"; } catch (e) {}
+  var lookSelect = document.getElementById("lookSelect");
+  if (lookSelect) {
+    lookSelect.value = look;
+    lookSelect.addEventListener("change", function () {
+      look = lookSelect.value;
+      try { localStorage.setItem("pixelisle.look", look); } catch (e) {}
+    });
+  }
 
   function norm(s) { return (s || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
 
@@ -134,6 +177,10 @@
   var toastEl = document.getElementById("toast");
   var modalNote = document.getElementById("modalNote");
   var answerText = document.getElementById("answerText");
+  var hudSceneEl = document.getElementById("hudScene");
+  var hudCluesEl = document.getElementById("hudClues");
+  var dialogueEl = document.getElementById("dialogue");
+  var dialogueTextEl = document.getElementById("dialogueText");
 
   var toastTimer = null;
   function toast(msg) {
@@ -145,9 +192,24 @@
 
   function isMurder() { return current === murderName; }
 
+  function updateHUD() {
+    hudSceneEl.textContent = isMurder() ? "MURDER SCENE" : "HOME ROOM";
+    hudCluesEl.textContent = isMurder() ? ("Clues: " + investigation.clues.length) : "";
+  }
+
+  function updateDialogueDom() {
+    if (dialogue) {
+      dialogueEl.classList.remove("hidden");
+      dialogueTextEl.textContent = dialogue[dialIndex] || "";
+    } else {
+      dialogueEl.classList.add("hidden");
+    }
+  }
+
   function refreshUI() {
     solveBtn.classList.toggle("hidden", !isMurder());
     if (!isMurder()) modal.classList.add("hidden");
+    updateHUD();
   }
 
   function goTo(name) {
@@ -157,6 +219,7 @@
     player.x = ent.spawn.x; player.y = ent.spawn.y;
     player.dir = "down"; player.moving = false; player.frame = 0;
     dialogue = null;
+    updateDialogueDom();
     doorCooldown = 0.5;
     refreshUI();
   }
@@ -271,7 +334,7 @@
   }
 
   function interact() {
-    if (dialogue) { dialIndex++; if (dialIndex >= dialogue.length) dialogue = null; return; }
+    if (dialogue) { dialIndex++; if (dialIndex >= dialogue.length) dialogue = null; updateDialogueDom(); return; }
     if (modal.classList.contains("hidden") === false) return;
     for (var i = 0; i < ent.npcs.length; i++) {
       var n = ent.npcs[i];
@@ -286,6 +349,7 @@
         if (!investigation.seen[ck]) {
           investigation.seen[ck] = true;
           investigation.clues.push(ck);
+          updateHUD();
           toast("Clue found (" + investigation.clues.length + ")");
           openDialogue(["You examine the " + lbl + ".", "Clue recorded. Clue details are coming soon."]);
         } else {
@@ -298,7 +362,7 @@
     if (sign) { openDialogue([signData[sign.x + "," + sign.y] || "Nothing written here."]); return; }
   }
 
-  function openDialogue(lines) { dialogue = lines; dialIndex = 0; }
+  function openDialogue(lines) { dialogue = lines; dialIndex = 0; updateDialogueDom(); }
 
   var camX = 0, camY = 0;
 
@@ -319,44 +383,13 @@
 
     PI.drawBigChairs(ctx, world, tx0, ty0, tx1, ty1, camX, camY);
 
-    var ents = [{ y: player.y, draw: function () { PI.drawChar(ctx, PI.playerFrames[player.dir][player.frame], player.x - camX, player.y - camY); } }];
+    var ents = [{ y: player.y, draw: function () { PI.drawPlayerLook(ctx, look, player.dir, player.frame, player.x - camX, player.y - camY); } }];
     for (var i = 0; i < ent.npcs.length; i++) {
       (function (n) { ents.push({ y: n.y, draw: function () { PI.drawChar(ctx, n.frames[0], n.x - camX, n.y - camY); } }); })(ent.npcs[i]);
     }
     ents.sort(function (a, b) { return a.y - b.y; });
     for (var j = 0; j < ents.length; j++) ents[j].draw();
 
-    drawHUD();
-    if (dialogue) drawDialogue();
-  }
-
-  function drawHUD() {
-    ctx.font = "7px monospace";
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText(isMurder() ? "MURDER SCENE" : "HOME ROOM", 4, 9);
-    ctx.fillStyle = "rgba(255,255,255,0.55)";
-    if (isMurder()) ctx.fillText("CLUES " + investigation.clues.length, 4, 19);
-    ctx.fillText("WASD move  E talk", VIEW_W - 82, 9);
-  }
-
-  function drawDialogue() {
-    var bx = 8, by = VIEW_H - 44, bw = VIEW_W - 16, bh = 36;
-    ctx.fillStyle = "rgba(10,8,16,0.92)";
-    ctx.fillRect(bx, by, bw, bh);
-    ctx.strokeStyle = "#e0bd79";
-    ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
-    ctx.fillStyle = "#f2e8c8";
-    ctx.font = "7px monospace";
-    var words = (dialogue[dialIndex] || "").split(" "), lines = [], cur = "";
-    for (var i = 0; i < words.length; i++) {
-      var t = cur ? cur + " " + words[i] : words[i];
-      if (t.length > 42) { if (cur) lines.push(cur); lines.push(words[i]); cur = ""; }
-      else cur = t;
-    }
-    if (cur) lines.push(cur);
-    for (var li = 0; li < lines.length && li < 3; li++) ctx.fillText(lines[li], bx + 6, by + 10 + li * 9);
-    ctx.fillStyle = "#c9a25c";
-    ctx.fillText("E to continue", bx + bw - 58, by + bh - 6);
   }
 
   solveBtn.addEventListener("click", function () {

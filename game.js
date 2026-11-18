@@ -182,6 +182,8 @@ window.PI = (function () {
     ".0255555166770..", ".015551667770...", "..0226677700....", "..02227700......"
   ], { "0": "#1c1c1c", "1": "#ffffff", "2": "#9f5656", "3": "#77e26f", "4": "#56ae5c", "5": "#e38282", "6": "#e36363", "7": "#833f3f" });
 
+  
+
   /* ---------- interior tiles ---------- */
   var FLOOR = (function () {
     var rows = [];
@@ -285,6 +287,27 @@ window.PI = (function () {
     "......kkkk......", "................", "................", "................"
   ], { k: "#4a3418", Q: "#a9743e", W: "#f2efe0" });
 
+  var LAB_FLOOR = sprite([
+    "0000000000000000", "0111111111111112", "0111111111111112", "0111111111111112",
+    "0111111111111112", "0111111111111112", "0111111111111112", "0111111111111112",
+    "0111111111111112", "0111111111111112", "0111111111111112", "0111111111111112",
+    "0111111111111112", "0111111111111112", "0111111111111112", "2222222222222222"
+  ], {"0":"#c7c7c7","1":"#737373","2":"#3b3b3b"});
+
+  var LAB_WALLS = sprite([
+    "1100000000000011", "1000000000000001", "0000000000000000", "0000000000000000",
+    "0000000000000000", "0000000000000000", "0000000000000000", "0000000000000000",
+    "0000000000000000", "0000000000000000", "0000000000000000", "0000000000000000",
+    "0000000000000000", "0000000000000000", "1000000000000001", "1100000000000011"
+  ], {"0":"#f2f2f2","1":"#4f4f4f","2":"#b07a45"});
+
+  var WORKBENCH = sprite([
+    ".DDDDDDDDDDDDDD.", "DLLLLLLLLLLLLLLD", "DLWMMWMMWMMWGGLD", "DLW11W22W33WGGLD",
+    "DLWMMWMMWMMWGGLD", "DLWWWWWWWWWWWWLD", "DLWWWWGGGGWWWWLD", "DLLLLLLLLLLLLLLD",
+    "DDDDDDDDDDDDDDDD", "DWWDWWWWWWWWDWWD", "DWWDWLLLLLLWDWWD", "DWWDWLGGGGLWDWWD",
+    "DWWDWWWWWWWWDWWD", "DWWDDDDDDDDDDWWD", "DDDKKKKKKKKKDDDD", ".DDDDDDDDDDDDDD."
+  ], {"1":"#00E5FF","2":"#FFEA00","3":"#D500F9","D":"#3B2219","W":"#795548","L":"#A1887F","M":"#546E7A","G":"#FFD700","K":"#1A0C06"});
+  
   var CABINET = sprite([
     "kkkkkkkkkkkkkkkk", "kBBBBBBBBBBBBBBk", "kBbbbbbbbbbbbbBk", "kBbwwwwwwwwwwbBk",
     "kBbwwwwwwwwwwbBk", "kBbbbbbbbbbbbbBk", "kBbbbbhhbbbbbbBk", "kBbbbbbbbbbbbbBk",
@@ -551,6 +574,84 @@ window.PI = (function () {
     "..01230000000...", "..0100A0A1000...", "..000AAA0A0.....", "....0000000....."
   ], { "0": "#1a1a1a", "1": "#3a3a3a", "2": "#2a2a2a", "3": "#0d0d0d", "4": "#e6be93", "5": "#6b5a3a", "6": "#4f4228", "7": "#ffffff", "8": "#7d3636", "9": "#a44646", "A": "#483d3d" });
 
+  var PSY_PLAYER_MALE = sprite([
+    "..........0000000000............", ".........0EEEEEEEEEE0000........",
+    ".......00EEEEEEEEEEEEEEE0.......", "......0EEEEEEEEE0EEEEEEEE0......",
+    "......0EEEEEEE0040EEEEEEE0......", "......0EEEEEE004440EEEEEEE0.....",
+    "......0EEEEEE044440EEE0EEEE0....", "......0EEEEE0044440EEE00EEE0....",
+    ".....0EEEEEE04444440EE00EEE0....", ".....0EEEEEE04444440E040EE0.....",
+    ".....0EEE0EE04444440E040EE0.....", ".....0EEE0EE04444440E04000......",
+    ".....0EEE0EE00444440E04440......", "......0E0K0000KKKKK00KKKK0......",
+    ".......04K41t34KKK4t314K40......", ".......04K41tt4K4K4tt14K40......",
+    "........0K4444K444K4444K0.......", "........04KKKK44444KKKK40.......",
+    ".........044444444444440........", "..........0044444444400.........",
+    "............000000000...........", ".......000000TTppETT00000.......",
+    "......0111110TppppET011110......", "......0111110TpppEET011110......",
+    "......01111100TEEET0011110......", ".....0111111020TET020111110.....",
+    ".....0111011022000220110110.....", ".....0111011022202220110110.....",
+    ".....0111011022202220110110.....", "....011110110222202201101110....",
+    "....01111011022K202201101110....", "....011101110222202201110110....",
+    "....011101110222202201110110....", "....01110111022K202201110110....",
+    "...01111011102222022011101110...", "...01111011102222022011101110...",
+    "...011110111022K2022011101110...", "...01111011102222022011101110...",
+    "...01111011102222022011101110...", "...01111011102220222011101110...",
+    "...01111011102220222011101110...", "...01111011102220222011101110...",
+    "..0111110111022202220111011110..", "..0111110111002060200111011110..",
+    "..01111101110P0P6P0P0111011110..", "...0000001110PPP6PPP011100000...",
+    "..04444401110PPP6PPP0111044440..", "..04444401110PPP6PPP0111044440..",
+    "...0444401110PPP6PPP011104440...", "....000001110PPP6PPP01110000....",
+    "........01110PPP6PPP01110.......", "........01110PPP6PPP01110.......",
+    "........00000PPP6PPP00000.......", "..........0PPPPP6PPPPP0.........",
+    "..........0PPPPP6PPPPP0.........", "..........0PPPPP6PPPPP0.........",
+    "..........0PPPPP6PPPPP0.........", "..........0PPPPP6PPPPP0.........",
+    "..........0PPPPP6PPPPP0.........", "..........0PPPPP6PPPPP0.........",
+    "..........0000006000000.........", "..........0772220772220.........",
+    "..........0222220222220.........", "..........0000000000000........."
+  ], {"0":"#141414","1":"#ffffff","2":"#322f2f","3":"#196bd7","4":"#ddb788","5":"#c8a06f","6":"#2c1d11","7":"#949494","K":"#595454","H":"#242424","h":"#7c552d","S":"#f2c48d","E":"#332319","T":"#3f6fb0","t":"#2f5590","P":"#382414","p":"#4b3030","B":"#694730","b":"#50301b"});
+
+  var PSY_PLAYER_FEMALE = sprite([
+    "..........0000000000............", ".........0EEEEEEEEEE0000........",
+    ".......00EEEEEEEEEEEEEEE0.......", "......0EEEEEEEEE0EEEEEEEE0......",
+    "......0EEEEEEE0040EEEEEEE0......", "......0EEEEEE004440EEEEEEE0.....",
+    "......0EEEEEE044440EEE0EEEE0....", "......0EEEEE0044440EEE00EEE0....",
+    ".....0EEEEEE04444440EE00E0E0....", ".....0EEEEEE04444440E040E0E0....",
+    ".....0EEE0EE04444440E040E0E0....", ".....0EEE0EE0K444440E0400EE0....",
+    ".....0EEE0EE00K444K0E0K440E0....", ".....0EE0K00004KKK40044KK0E0....",
+    ".....0E04K41t34K4K4t314K40E0....", ".....0E04K41tt4K4K4tt14K40E0....",
+    ".....0EE04K444K444K444K40EE0....", ".....0EE044KKK44444KKK440EE0....",
+    ".....0EEE044444444444440EEE0....", ".....0EEEE0044444444400EEEE0....",
+    ".....0EEEEEE000000000EEEEEE0....", ".....0E000000TTppETT00000EE0....",
+    ".....00111110TppppET011110E0....", "......0111110TpppEET011110E0....",
+    "......01111100TEEET0011110E0....", ".....0111111020TET020111110.....",
+    ".....0111011022000220110110.....", ".....0111011022202220110110.....",
+    ".....0111011022202220110110.....", "....011110110222202201101110....",
+    "....01111011022K202201101110....", "....011101110222202201110110....",
+    "....011101110222202201110110....", "....01110111022K202201110110....",
+    "...01111011102222022011101110...", "...01111011102222022011101110...",
+    "...011110111022K2022011101110...", "...01111011102222022011101110...",
+    "...01111011102222022011101110...", "...01111011102220222011101110...",
+    "...01111011102220222011101110...", "...01111011102220222011101110...",
+    "..0111110111022202220111011110..", "..0111110111002060200111011110..",
+    "..01111101110P0P6P0P0111011110..", "...0000001110PPP6PPP011100000...",
+    "..04444401110PPP6PPP0111044440..", "..04444401110PPP6PPP0111044440..",
+    "...0444401110PPP6PPP011104440...", "....000001110PPP6PPP01110000....",
+    "........01110PPP6PPP01110.......", "........01110PPP6PPP01110.......",
+    "........00000PPP6PPP00000.......", "..........0PPPPP6PPPPP0.........",
+    "..........0PPPPP6PPPPP0.........", "..........0PPPPP6PPPPP0.........",
+    "..........0PPPPP6PPPPP0.........", "..........0PPPPP6PPPPP0.........",
+    "..........0PPPPP6PPPPP0.........", "..........0PPPPP6PPPPP0.........",
+    "..........0000006000000.........", "..........077HHH0772220.........",
+    "..........0HHHHH0222220.........", "..........0000000000000........."
+  ], {"0":"#141414","1":"#ffffff","2":"#322f2f","3":"#196bd7","4":"#ddb788","5":"#c8a06f","6":"#2c1d11","7":"#949494","K":"#595454","H":"#242424","h":"#7c552d","S":"#f2c48d","E":"#332319","T":"#3f6fb0","t":"#2f5590","P":"#382414","p":"#4b3030","B":"#694730","b":"#50301b"});
+
+  var PLAYER_LOOKS = { "Percy": null, "Male": PSY_PLAYER_MALE, "Female": PSY_PLAYER_FEMALE };
+
+  function drawPlayerLook(ctx, look, dir, frame, x, y) {
+    if (look === "Male") { drawChar(ctx, PSY_PLAYER_MALE, x, y); return; }
+    if (look === "Female") { drawChar(ctx, PSY_PLAYER_FEMALE, x, y); return; }
+    drawChar(ctx, playerFrames[dir][frame], x, y);
+  }
+
   var grassTiles = [makeGrass(), makeGrass(), makeGrass()];
   var pathTiles = [makePath(), makePath()];
   var waterTiles = [makeWater(0), makeWater(1)];
@@ -709,7 +810,7 @@ window.PI = (function () {
     "~": 1, "T": 1, "R": 1, "W": 1, "r": 1, "=": 1,
     "#": 1, "O": 1, "Y": 1, "L": 1, "E": 1, "A": 1, "B": 1, "Q": 1, "V": 1, "I": 1,
     "G": 1, "H": 1, "J": 1, "K": 1, "M": 1, "c": 1, "j": 1, "k": 1, "l": 1, "m": 1,
-    "n": 1, "x": 1, "t": 1, "y": 1, "v": 1
+    "n": 1, "x": 1, "t": 1, "y": 1, "v": 1, "U": 1, "a": 1
   };
   var OVERLAY = { "T": 1, "R": 1, "f": 1, "=": 1, "S": 1, "C": 1, "b": 1 };
 
@@ -776,6 +877,9 @@ window.PI = (function () {
     else if (c === "r") drawSprite(ctx, roofTile, sx, sy);
     else if (c === "D") drawSprite(ctx, doorLocked ? DOOR_CLOSED : DOOR_OPEN, sx, sy);
     else if (c === "F") drawSprite(ctx, FLOOR, sx, sy);
+    else if (c === "w") drawSprite(ctx, LAB_FLOOR, sx, sy);
+    else if (c === "U") drawSprite(ctx, LAB_WALLS, sx, sy);
+    else if (c === "a") drawSprite(ctx, WORKBENCH, sx, sy);
     else if (c === "#") drawSprite(ctx, WALL, sx, sy);
     else if (c === "u") drawSprite(ctx, RUG, sx, sy);
     else if (c === "O") drawSprite(ctx, WINDOW, sx, sy);
@@ -829,6 +933,9 @@ window.PI = (function () {
     else if (c === "r") g.drawImage(roofTile, 0, 0, 16, 16);
     else if (c === "D") g.drawImage(DOOR_CLOSED, 0, 0, 16, 16);
     else if (c === "F") g.drawImage(FLOOR, 0, 0, 16, 16);
+    else if (c === "w") g.drawImage(LAB_FLOOR, 0, 0, 16, 16);
+    else if (c === "U") g.drawImage(LAB_WALLS, 0, 0, 16, 16);
+    else if (c === "a") g.drawImage(WORKBENCH, 0, 0, 16, 16);
     else if (c === "#") g.drawImage(WALL, 0, 0, 16, 16);
     else if (c === "u") g.drawImage(RUG, 0, 0, 16, 16);
     else if (c === "O") g.drawImage(WINDOW, 0, 0, 16, 16);
@@ -874,7 +981,7 @@ window.PI = (function () {
     { c: "=", label: "Fence" }, { c: "W", label: "Brick" }, { c: "r", label: "Roof" },
     { c: "D", label: "Door" }, { c: "C", label: "Coin" }, { c: "S", label: "Sign" },
     { c: "b", label: "Berry" }, { c: "N", label: "NPC" }, { c: "X", label: "Spawn" },
-    { c: "F", label: "Floor" }, { c: "#", label: "Paneled wall" }, { c: "u", label: "Rug" },
+    { c: "F", label: "Floor" }, { c: "w", label: "Lab floor" }, { c: "U", label: "Lab wall" }, { c: "a", label: "Workbench" }, { c: "#", label: "Paneled wall" }, { c: "u", label: "Rug" },
     { c: "O", label: "Night window" }, { c: "L", label: "Bookshelf" }, { c: "I", label: "Picture" },
     { c: "c", label: "Corkboard" }, { c: "M", label: "World map" }, { c: "j", label: "Desk" },
     { c: "k", label: "Desk + phone" }, { c: "l", label: "Desk + lamp" }, { c: "m", label: "Desk + files" },
@@ -892,7 +999,7 @@ window.PI = (function () {
     "Brick": brickTile, "Roof": roofTile,
     "Tree": TREE, "Rock": ROCK, "Flower": FLOWER, "Fence": FENCE, "Sign": SIGN,
     "Coin": COIN, "Door closed": DOOR_CLOSED, "Door open": DOOR_OPEN, "Berry": STRAWBERRY,
-    "Floor": FLOOR, "Wall": WALL, "Rug": RUG, "Night window": WINDOW, "Curtain": CURTAIN,
+    "Floor": FLOOR, "Lab floor": LAB_FLOOR, "Lab wall": LAB_WALLS, "Workbench": WORKBENCH, "Wall": WALL, "Rug": RUG, "Night window": WINDOW, "Curtain": CURTAIN,
     "Bookshelf": BOOKSHELF, "Fireplace": FIREPLACE, "Chair red": CHAIR_RED, "Chair olive": CHAIR_OLIVE,
     "Table": TABLE, "Cabinet": CABINET, "Stairs": STAIRS, "Picture": PICTURE,
     "Desk": DESK_BASE, "Desk phone": DESK_PHONE, "Desk lamp": DESK_LAMP,
@@ -904,7 +1011,8 @@ window.PI = (function () {
     "Player up 1": playerFrames.up[0], "Player up 2": playerFrames.up[1],
     "Player left 1": playerFrames.left[0], "Player left 2": playerFrames.left[1],
     "Player right 1": playerFrames.right[0], "Player right 2": playerFrames.right[1],
-    "NPC villager 1": npcSprites[0], "NPC villager 2": npcSprites[1], "NPC Holmes": holmesNpc
+    "NPC villager 1": npcSprites[0], "NPC villager 2": npcSprites[1], "NPC Holmes": holmesNpc,
+    "Player male": PSY_PLAYER_MALE, "Player female": PSY_PLAYER_FEMALE
   };
 
   var RAW = {
@@ -943,6 +1051,10 @@ window.PI = (function () {
     rebuild: rebuild,
     drawSprite: drawSprite,
     drawChar: drawChar,
+    drawPlayerLook: drawPlayerLook,
+    PLAYER_LOOKS: PLAYER_LOOKS,
+    PSY_PLAYER_MALE: PSY_PLAYER_MALE,
+    PSY_PLAYER_FEMALE: PSY_PLAYER_FEMALE,
     drawBigChairs: drawBigChairs,
     drawTile: drawTile,
     makeThumb: makeThumb
