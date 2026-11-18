@@ -7,7 +7,9 @@ OUT = os.path.join(HERE, "Pixel_Isle_INT4096.html")
 SKILL = r"C:\Users\Percy\OneDrive\Desktop\Job record\Classroom\LingLam_3D\.opencode\skills\frontend-slides\plugins\frontend-slides\skills\frontend-slides"
 BASE_CSS = open(os.path.join(SKILL, "viewport-base.css"), encoding="utf-8").read()
 
-TOTAL = 23
+TOTAL = 27
+
+PAGE = [1]
 
 
 def head(chapter, title, icon, size=60):
@@ -32,6 +34,7 @@ def footer(n):
 
 
 def content(body, chapter, title, icon, n, size=60, extra=""):
+    PAGE[0] += 1
     return f"""
     <section class="slide content-slide" aria-hidden="true">
       <div class="panel">
@@ -42,11 +45,12 @@ def content(body, chapter, title, icon, n, size=60, extra=""):
           {body}
         </div>
       </div>
-      {footer(n)}
+      {footer(PAGE[0])}
     </section>"""
 
 
 def section(num, title, sub, page):
+    PAGE[0] += 1
     return f"""
     <section class="slide section-slide" aria-hidden="true">
       <div class="section-tag">PIXEL ISLE // 001</div>
@@ -65,7 +69,7 @@ def section(num, title, sub, page):
       <div class="spark s1"></div><div class="spark s2"></div><div class="spark s3"></div>
       <footer class="section-footer">
         <span>PIXEL ISLE&nbsp;&nbsp;//&nbsp;&nbsp;INT4096&nbsp;&nbsp;//&nbsp;&nbsp;GROUP 2</span>
-        <span class="page-chip">{page:02d}</span>
+        <span class="page-chip">{PAGE[0]:02d}</span>
       </footer>
     </section>"""
 
@@ -84,6 +88,16 @@ def chart_ph(fig, title, text, kind, height, plate_w=720):
         </div>
         <div class="drop">DROP CHART HERE</div>
       </div>"""
+
+
+def chart_img(fig, src, height, caption=""):
+    cap = f'<div class="chart-caption">{caption}</div>' if caption else ""
+    return f"""
+      <div class="chart-ph solid" style="height:{height}px">
+        <div class="fig">{fig}</div>
+        <img class="chart-pic" src="assets/charts/{src}" alt="{fig}">
+      </div>
+      {cap}"""
 
 
 sections = []
@@ -108,7 +122,7 @@ sections.append(f"""
       <button class="start-btn" data-next>PRESS START &gt;&gt;</button>
       <div class="course">INT4096&nbsp;&nbsp;ARTIFICIAL INTELLIGENCE &amp;<br>MACHINE LEARNING IN EDUCATION</div>
     </div>
-    <div class="title-foot">THE EDUCATION UNIVERSITY OF HONG KONG&nbsp;&nbsp;//&nbsp;&nbsp;2026-27 SEM 1<br>GROUP 2&nbsp;&nbsp;//&nbsp;&nbsp;[MEMBER NAMES]&nbsp;&nbsp;//&nbsp;&nbsp;18 NOV 2026</div>
+    <div class="title-foot">THE EDUCATION UNIVERSITY OF HONG KONG&nbsp;&nbsp;//&nbsp;&nbsp;2026-27 SEM 1<br>GROUP 2&nbsp;&nbsp;//&nbsp;&nbsp;CHIU WAI YIU · LAI CHUN KUI · LAI WAN YAU SONYA · MAK TSUN WAI MARSIO<br>WONG CHING WAI · WONG SUI KI · WONG TSZ CHING&nbsp;&nbsp;//&nbsp;&nbsp;18 NOV 2026</div>
   </div>
   <div class="room-tag">HOME ROOM // 22:40</div>
   {note("Timing 0:00-1:00. Open with the hook: today's news is usually a wall of text. Pixel Isle turns one real news story into a playable murder mystery. Say the group number and that this is an end-to-end NLP + game project.")}
@@ -282,11 +296,10 @@ sections.append(content(f"""
           </div>
         </div>
         <div class="reveal" style="--i:3">
-          {chart_ph("FIG. 01", "LABEL DISTRIBUTION", "Insert bar or donut: counts / % for 0 filler, 1 key, 2 evidence.", "bar", 590, 700)}
-          <div class="chart-caption">Suggested source: data_full.csv -&gt; sentence_label value_counts()</div>
+          {chart_img("FIG. 01", "label_distribution.png", 590, "Source: data_full.csv -> sentence_label value_counts()")}
         </div>
       </div>
-      {note("Timing 10:00-11:30. Size matters here: 67,647 sentences from 1,322 articles across 9 categories. The right side is a chart placeholder: insert the class distribution before the final presentation.")}
+      {note("Timing 10:00-11:30. Size matters here: 67,647 sentences from 1,322 articles across 9 categories. The right side shows the class distribution; imbalance is a key discussion point.")}
 """, "CHAPTER 03 // DATA", "THE CASE FILE: 67,647 SENTENCES", "news", 10, 49))
 
 # ------------------------------------------------------------------ 11 PREPROCESSING
@@ -420,6 +433,34 @@ sections.append(content(f"""
       {note("Timing 14:30-15:15. Fair comparison is the message. Every model uses the same article-level split and metric definitions. Train learns, validation checks, test is reported once.")}
 """, "CHAPTER 03 // EVALUATION", "A FAIR FIGHT: SAME SPLIT, SAME METRICS", "target", 14, 40))
 
+# ------------------------------------------------------------------ 14b ETHICS & DATA
+sections.append(content(f"""
+      <div class="prep-wrap">
+        <div class="prep-cols">
+          <div class="prep-col reveal" style="--i:0">
+            <div class="prep-bar red">HOW WE USE NEWS</div>
+            <ul>
+              <li>One real story per day from public RSS feeds (BBC, CNN, The Guardian).</li>
+              <li>Content is current, real-world news — not fabricated.</li>
+              <li>We keep short sentence excerpts, not full republished articles.</li>
+              <li>Non-commercial, classroom prototype within a university course.</li>
+            </ul>
+          </div>
+          <div class="prep-col reveal" style="--i:1">
+            <div class="prep-bar green">COPYRIGHT &amp; LICENSE</div>
+            <ul>
+              <li>BBC and other outlets are copyrighted, not open-source.</li>
+              <li>RSS is for personal reading; brief excerpts are low-risk in a student prototype.</li>
+              <li>We do not redistribute full articles or claim ownership.</li>
+              <li>Any public demo uses the shortest excerpts and credits the source.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="why reveal" style="--i:2">REAL NEWS IS THE INPUT — USED IN GOOD FAITH FOR EDUCATION.</div>
+      </div>
+      {note("Ethics and data use. The input is real, current news used for a short educational prototype. BBC content is copyrighted, not open-source, so the demo stays non-commercial and credits the source.")}
+""", "CHAPTER 03 // ETHICS & DATA", "REAL NEWS, USED RESPONSIBLY", "alert", 15, 46))
+
 # ------------------------------------------------------------------ 15 SECTION 04
 sections.append(section("04", "THE RESULTS", "The model ranks.<br>The numbers decide.", 15))
 sections[-1] = sections[-1].replace("</section>", note("Timing 15:15-15:30. Chapter break. Now the evidence: comparison table, training curve, confusion matrix.") + "</section>")
@@ -429,52 +470,36 @@ sections.append(content(f"""
       <table class="pixel-table reveal">
         <thead><tr><th>METHOD</th><th>MACRO-F1</th><th>KEY-F1</th><th>TOP-3</th><th>TIME</th><th>PARAMS</th></tr></thead>
         <tbody>
-          <tr><td>TF-IDF + Logistic Regression</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
-          <tr><td>LSTM + self-built vocab</td><td class="center">0.709</td><td class="center">0.543</td><td class="center">0.618</td><td class="center">10 min</td><td class="center">5.2M</td></tr>
-          <tr><td>LSTM + RoBERTa tokenizer</td><td class="center">0.736</td><td class="center">0.552</td><td class="center">0.638</td><td class="center">9 min</td><td class="center">6.7M</td></tr>
-          <tr class="best"><td>&gt;&gt; DistilRoBERTa (reference)</td><td class="center">0.798</td><td class="center">0.660</td><td class="center">0.706</td><td class="center">26 min</td><td class="center">82.1M</td></tr>
+          <tr><td>TF-IDF + Logistic Regression (baseline)</td><td class="center">0.653</td><td class="center">0.424</td><td class="center">0.455</td><td class="center">&lt;1 min</td><td class="center">0.39M</td></tr>
+          <tr><td>LSTM + self-built vocab</td><td class="center">0.709</td><td class="center">0.543</td><td class="center">0.618</td><td class="center">8.5 min</td><td class="center">5.2M</td></tr>
+          <tr><td>LSTM + RoBERTa tokenizer</td><td class="center">0.736</td><td class="center">0.552</td><td class="center">0.638</td><td class="center">7.8 min</td><td class="center">6.7M</td></tr>
+          <tr class="best"><td>&gt;&gt; DistilRoBERTa (reference)</td><td class="center">0.806</td><td class="center">0.673</td><td class="center">0.693</td><td class="center">21 min</td><td class="center">82.1M</td></tr>
         </tbody>
       </table>
       <div class="results-chart reveal" style="--i:3">
-        {chart_ph("FIG. 02", "GROUPED BAR: MODEL VS METRIC", "Insert grouped bars for each metric, plus the TF-IDF baseline.", "bar", 330, 820)}
+        {chart_img("FIG. 02", "compare_wide.png", 330, "")}
       </div>
-      <div class="source-line">Primary course model: TF-IDF + LogReg. Neural rows are reference comparisons (seed 42). Add baseline scores before presenting.</div>
-      {note("Timing 15:30-17:00. The table is the evidence. DistilRoBERTa leads every reported metric, at 82.1M parameters and 26 minutes. The TF-IDF row is TBD: fill it from the final baseline run. The chart placeholder is for the grouped bar visual.")}
+      <div class="source-line">Primary course model: TF-IDF + LogReg (baseline). Neural rows are reference comparisons (seed 42).</div>
+      {note("Timing 15:30-17:00. The table is the evidence. DistilRoBERTa leads every reported metric, at 82.1M parameters and 21 minutes. The TF-IDF baseline is included as the primary classical model.")}
 """, "CHAPTER 04 // RESULTS", "MODEL COMPARISON: THE NUMBERS", "chart", 16, 53))
 
 # ------------------------------------------------------------------ 17 TRAINING CURVE
 sections.append(content(f"""
-      <div class="double-grid">
-        <div class="reveal" style="--i:0">
-          {chart_ph("FIG. 03", "LOSS + F1 VS EPOCH", "Insert training / validation loss and validation macro-F1 by epoch.", "line", 620, 660)}
-          <div class="chart-caption">Insert the exported training log or notebook chart.</div>
-        </div>
-        <div class="side-card reveal" style="--i:1">
-          <div class="bar navy">READ THE CURVE</div>
-          <ul>
-            <li>Training loss decreased during the run.</li>
-            <li>Validation loss fluctuated, especially at epoch 7.</li>
-            <li>Validation F1 rose overall, but not every epoch.</li>
-            <li>Lower training loss did not always mean better validation.</li>
-          </ul>
-          <div class="side-note">BEST CHECKPOINT = HIGHEST VALIDATION MACRO-F1</div>
-          <div class="side-strip">VALIDATION &gt;<br>TRAINING LOSS</div>
-        </div>
-      </div>
-      {note("Timing 17:00-17:45. Insert the real loss and macro-F1 curves. The talking point: validation fluctuated around epoch 7, and lower training loss is not automatically better. Mention best-checkpoint selection.")}
+      {chart_img("FIG. 03", "training_progress.png", 620, "Train / val loss + validation macro-F1 by epoch (LSTM word · LSTM tok · DistilRoBERTa).")}
+      <div class="why reveal" style="--i:1">READ THE CURVE: training loss falls, validation loss wobbles, and validation macro-F1 rises overall. Lower training loss is not always better — keep the best validation checkpoint.</div>
+      {note("Timing 17:00-17:45. Show the real training curves. Validation loss fluctuates while validation F1 rises; we keep the best validation checkpoint.")}
 """, "CHAPTER 04 // RESULTS", "TRAINING CURVE: WHAT TO WATCH", "chart", 17, 53))
 
 # ------------------------------------------------------------------ 18 ERROR
 sections.append(content(f"""
       <div class="double-grid wide-left">
         <div class="reveal" style="--i:0">
-          {chart_ph("FIG. 04", "3x3 CONFUSION MATRIX", "Rows = true label, columns = predicted. Insert the test-set matrix.", "matrix", 620, 620)}
-          <div class="chart-caption">Add 2-3 misclassified sentences beside the matrix.</div>
+          {chart_img("FIG. 04", "confusion_matrix.png", 620, "Test-set matrix — TF-IDF + Logistic Regression")}
         </div>
         <div class="side-card reveal" style="--i:1">
           <div class="bar red">ERROR ANALYSIS</div>
           <ul>
-            <li><b>Evidence is hardest.</b> It overlaps with key sentences and has fewer clear cues.</li>
+            <li><b>Key sentences are hardest.</b> They are rare and sit between filler and evidence, so they are easy to confuse.</li>
             <li><b>Labels are noisy.</b> DeepSeek-assisted labels can be wrong, so scores absorb label error.</li>
             <li><b>Class imbalance.</b> Filler dominates; balanced weights help, but do not erase the problem.</li>
             <li><b>Next step.</b> Inspect top false positives and false negatives, then refine the label guide.</li>
@@ -483,13 +508,13 @@ sections.append(content(f"""
           <div class="side-strip">LABEL NOISE = SCORE NOISE</div>
         </div>
       </div>
-      {note("Timing 17:45-18:30. The matrix is a placeholder, but the failure modes are known. Evidence is hardest. Labels were LLM-assisted, so label noise is a real limitation. End with concrete error inspection.")}
+      {note("Timing 17:45-18:30. The matrix shows the test-set result. Key sentences are the hardest class. Labels were LLM-assisted, so label noise is a real limitation. End with concrete error inspection.")}
 """, "CHAPTER 04 // RESULTS", "WHERE THE MODEL STILL STRUGGLES", "alert", 18, 48))
 
 # ------------------------------------------------------------------ 19 RESULTS SHOW
 sections.append(content(f"""
       <div class="results-grid">
-        <div class="result-card reveal" style="--i:0"><div class="bar green">BEST REPORTED<img src="assets/icons/check.png" alt=""></div><p>DistilRoBERTa: 0.798 macro-F1 and 0.660 key-F1.</p></div>
+        <div class="result-card reveal" style="--i:0"><div class="bar green">BEST REPORTED<img src="assets/icons/check.png" alt=""></div><p>DistilRoBERTa: 0.806 macro-F1 and 0.673 key-F1.</p></div>
         <div class="result-card reveal" style="--i:1"><div class="bar gold">BIGGER MODEL<img src="assets/icons/model.png" alt=""></div><p>82.1M parameters vs 5.2M / 6.7M for the LSTM runs.</p></div>
         <div class="result-card reveal" style="--i:2"><div class="bar red">NOISY LABELS<img src="assets/icons/alert.png" alt=""></div><p>DeepSeek-assisted labels may contain errors that move scores.</p></div>
         <div class="result-card reveal" style="--i:3"><div class="bar navy">ONE SEED<img src="assets/icons/target.png" alt=""></div><p>Single seed; measures sentence classification, not learning gains.</p></div>
@@ -555,6 +580,53 @@ sections.append(content(f"""
       {note("Timing 20:00-20:30 if time allows. Six learnings. The final line is the thesis: an education AI system succeeds or fails on the whole pipeline, especially the last mile.")}
 """, "CHAPTER 04 // REFLECTION", "WHAT THE TEAM LEARNED", "book", 22, 60, "center-body"))
 
+# ------------------------------------------------------------------ 22b LIMITATIONS & FUTURE
+sections.append(content(f"""
+      <div class="prep-wrap">
+        <div class="prep-cols">
+          <div class="prep-col reveal" style="--i:0">
+            <div class="prep-bar red">LIMITATIONS (HONEST)</div>
+            <ul>
+              <li>Single seed (42) — no stability study yet.</li>
+              <li>LLM-assisted labels introduce noise.</li>
+              <li>Scores measure sentence importance, not learning gains.</li>
+            </ul>
+          </div>
+          <div class="prep-col reveal" style="--i:1">
+            <div class="prep-bar green">FUTURE WORK</div>
+            <ul>
+              <li>Make the clues more directly related to the story.</li>
+              <li>Add student history and daily streaks for engagement.</li>
+              <li>Sharpen the news-to-clue mapping (currently not fully focused).</li>
+            </ul>
+          </div>
+        </div>
+        <div class="why reveal" style="--i:2">NEXT ITERATION: THE NEWS SHOULD BE THE MYSTERY, NOT JUST THE BACKDROP.</div>
+      </div>
+      {note("Limitations and next steps. Honest limits: one seed, noisy labels, and the metric measures sentence importance not learning. Future work: tie clues closer to the story, add streaks/history, sharpen the news-to-clue mapping.")}
+""", "CHAPTER 04 // REFLECTION", "LIMITATIONS & NEXT STEPS", "target", 24, 46))
+
+# ------------------------------------------------------------------ 22c TEAM & ROLES
+roles = [
+    ("PROJECT LEAD", "Scope, schedule, integration.", "game"),
+    ("GAME DEVELOPER", "Pixel game, scenes, mechanics.", "game"),
+    ("CRAWLER & DATA", "RSS fetch, clean, label, merge.", "news"),
+    ("ML ENGINEER", "Baseline + neural models, eval.", "model"),
+    ("FRONTEND / UI", "Editor, HUD, presentation UI.", "gear"),
+    ("QA & TESTING", "Pipeline tests, bug hunting.", "target"),
+    ("DOCS & PITCH", "Slides, report, live demo.", "book"),
+]
+accents = ["red", "gold", "navy", "green", "gold", "red", "navy"]
+role_html = "".join(
+    f'<div class="role-card reveal" style="--i:{i}"><div class="bar {accents[i]}">{t}<img src="assets/icons/{ic}.png" alt=""></div><p>{d}</p></div>'
+    for i, (t, d, ic) in enumerate(roles)
+)
+sections.append(content(f"""
+      <div class="role-grid">{role_html}</div>
+      <div class="source-line" style="text-align:center; margin-top:22px;">GROUP 2&nbsp;&nbsp;//&nbsp;&nbsp;CHIU WAI YIU · LAI CHUN KUI · LAI WAN YAU SONYA · MAK TSUN WAI MARSIO · WONG CHING WAI · WONG SUI KI · WONG TSZ CHING</div>
+      {note("Team slide. Seven members, seven roles. Assign each name to a role before presenting.")}
+""", "THE TEAM", "SEVEN ROLES, ONE CASE", "game", 25, 48))
+
 # ------------------------------------------------------------------ 23 CLOSING
 sections.append(f"""
 <section class="slide title-slide closing" aria-hidden="true">
@@ -575,15 +647,30 @@ sections.append(f"""
       <div class="questions">QUESTIONS &gt;&gt;</div>
     </div>
     <div class="closing-end">THE END</div>
-    <div class="title-foot">GROUP 2&nbsp;&nbsp;//&nbsp;&nbsp;[MEMBER NAMES]<br>INT4096 · 2026-27 SEM 1</div>
+    <div class="title-foot">GROUP 2&nbsp;&nbsp;//&nbsp;&nbsp;CHIU WAI YIU · LAI CHUN KUI · LAI WAN YAU SONYA · MAK TSUN WAI MARSIO<br>WONG CHING WAI · WONG SUI KI · WONG TSZ CHING&nbsp;&nbsp;//&nbsp;&nbsp;INT4096 · 2026-27 SEM 1</div>
   </div>
-  <div class="qr-zone">
-    <div class="qr-box"><span>QR CODE<br>DEMO / REPO</span></div>
-    <div class="qr-repo">github.com/Percy-the-train/<br>pixel-isle-for-int4096</div>
-    <div class="qr-scan">SCAN TO PLAY THE CASE</div>
-  </div>
-  {note("Close with the three summary lines, then invite questions. Put the demo QR code in the dashed box before presenting.")}
+  {note("Close with the three summary lines, then invite questions.")}
 </section>""")
+
+# ------------------------------------------------------------------ 24 REFERENCES
+ref_left = [
+    "Hochreiter, S., &amp; Schmidhuber, J. (1997). Long short-term memory. Neural Computation, 9(8), 1735–1780.",
+    "Liu, Y., Ott, M., Goyal, N., Du, J., Joshi, M., Chen, D., Levy, O., Lewis, M., Zettlemoyer, L., &amp; Stoyanov, V. (2019). RoBERTa: A robustly optimized BERT pretraining approach. arXiv:1907.11692.",
+    "Media Technology Monitor. (2024). News Alert, 09-05-2024. https://mtm-otm.ca/",
+]
+ref_right = [
+    "Paszke, A., et al. (2019). PyTorch: An imperative style, high-performance deep learning library. Advances in Neural Information Processing Systems, 32.",
+    "Pedregosa, F., et al. (2011). Scikit-learn: Machine learning in Python. Journal of Machine Learning Research, 12, 2825–2830.",
+    "Sanh, V., Debut, L., Chaumond, J., &amp; Wolf, T. (2019). DistilBERT, a distilled version of BERT: Smaller, faster, cheaper and lighter. arXiv:1910.01108.",
+    "Wolf, T., et al. (2020). Transformers: State-of-the-art natural language processing. arXiv:1910.03771.",
+]
+sections.append(content(f"""
+      <div class="prep-cols">
+        <div class="prep-col reveal" style="--i:0"><div style="font-size:16px; line-height:1.3; color:var(--ink-soft); padding:16px 4px;">{"<br><br>".join(ref_left)}</div></div>
+        <div class="prep-col reveal" style="--i:1"><div style="font-size:16px; line-height:1.3; color:var(--ink-soft); padding:16px 4px;">{"<br><br>".join(ref_right)}</div></div>
+      </div>
+      {note("References in APA 7 format, citing the statistics source, the models, and the libraries used.")}
+""", "REFERENCES", "REFERENCES (APA 7TH)", "book", 27, 44))
 
 HTML = f"""<!DOCTYPE html>
 <html lang="en">
@@ -928,6 +1015,8 @@ button {{ font: inherit; }}
 .chart-plate h3 {{ font-family: var(--display); font-size: 15px; line-height: 1.4; color: var(--red); text-align: center; }}
 .chart-plate p {{ margin-top: 8px; font-family: var(--body); font-size: 25px; line-height: 1.02; color: var(--ink-soft); text-align: center; }}
 .chart-ph .drop {{ position: absolute; right: 18px; bottom: 12px; font-family: var(--body); font-size: 19px; color: var(--muted); }}
+.chart-ph.solid {{ border: 5px solid var(--ink); background: var(--cream-light); }}
+.chart-pic {{ position: absolute; left: 24px; top: 60px; right: 24px; bottom: 18px; max-width: calc(100% - 48px); max-height: calc(100% - 78px); object-fit: contain; image-rendering: pixelated; }}
 .chart-caption {{ margin-top: 10px; font-family: var(--body); font-size: 18px; color: var(--muted); }}
 
 /* ============================================================

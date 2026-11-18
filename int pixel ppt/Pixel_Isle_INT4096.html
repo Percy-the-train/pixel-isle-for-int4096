@@ -474,6 +474,8 @@ button { font: inherit; }
 .chart-plate h3 { font-family: var(--display); font-size: 15px; line-height: 1.4; color: var(--red); text-align: center; }
 .chart-plate p { margin-top: 8px; font-family: var(--body); font-size: 25px; line-height: 1.02; color: var(--ink-soft); text-align: center; }
 .chart-ph .drop { position: absolute; right: 18px; bottom: 12px; font-family: var(--body); font-size: 19px; color: var(--muted); }
+.chart-ph.solid { border: 5px solid var(--ink); background: var(--cream-light); }
+.chart-pic { position: absolute; left: 24px; top: 60px; right: 24px; bottom: 18px; max-width: calc(100% - 48px); max-height: calc(100% - 78px); object-fit: contain; image-rendering: pixelated; }
 .chart-caption { margin-top: 10px; font-family: var(--body); font-size: 18px; color: var(--muted); }
 
 /* ============================================================
@@ -719,7 +721,7 @@ body.editing .edit-hint { display: block; }
       <button class="start-btn" data-next>PRESS START &gt;&gt;</button>
       <div class="course">INT4096&nbsp;&nbsp;ARTIFICIAL INTELLIGENCE &amp;<br>MACHINE LEARNING IN EDUCATION</div>
     </div>
-    <div class="title-foot">THE EDUCATION UNIVERSITY OF HONG KONG&nbsp;&nbsp;//&nbsp;&nbsp;2026-27 SEM 1<br>GROUP 2&nbsp;&nbsp;//&nbsp;&nbsp;[MEMBER NAMES]&nbsp;&nbsp;//&nbsp;&nbsp;18 NOV 2026</div>
+    <div class="title-foot">THE EDUCATION UNIVERSITY OF HONG KONG&nbsp;&nbsp;//&nbsp;&nbsp;2026-27 SEM 1<br>GROUP 2&nbsp;&nbsp;//&nbsp;&nbsp;CHIU WAI YIU · LAI CHUN KUI · LAI WAN YAU SONYA · MAK TSUN WAI MARSIO<br>WONG CHING WAI · WONG SUI KI · WONG TSZ CHING&nbsp;&nbsp;//&nbsp;&nbsp;18 NOV 2026</div>
   </div>
   <div class="room-tag">HOME ROOM // 22:40</div>
   <aside class="notes">Timing 0:00-1:00. Open with the hook: today's news is usually a wall of text. Pixel Isle turns one real news story into a playable murder mystery. Say the group number and that this is an end-to-end NLP + game project.</aside>
@@ -1077,18 +1079,14 @@ body.editing .edit-hint { display: block; }
         </div>
         <div class="reveal" style="--i:3">
           
-      <div class="chart-ph" style="background-image:url('assets/ph_bar.png');height:590px">
+      <div class="chart-ph solid" style="height:590px">
         <div class="fig">FIG. 01</div>
-        <div class="chart-plate" style="width:700px">
-          <h3>LABEL DISTRIBUTION</h3>
-          <p>Insert bar or donut: counts / % for 0 filler, 1 key, 2 evidence.</p>
-        </div>
-        <div class="drop">DROP CHART HERE</div>
+        <img class="chart-pic" src="assets/charts/label_distribution.png" alt="FIG. 01">
       </div>
-          <div class="chart-caption">Suggested source: data_full.csv -&gt; sentence_label value_counts()</div>
+      <div class="chart-caption">Source: data_full.csv -> sentence_label value_counts()</div>
         </div>
       </div>
-      <aside class="notes">Timing 10:00-11:30. Size matters here: 67,647 sentences from 1,322 articles across 9 categories. The right side is a chart placeholder: insert the class distribution before the final presentation.</aside>
+      <aside class="notes">Timing 10:00-11:30. Size matters here: 67,647 sentences from 1,322 articles across 9 categories. The right side shows the class distribution; imbalance is a key discussion point.</aside>
 
         </div>
       </div>
@@ -1303,6 +1301,55 @@ body.editing .edit-hint { display: block; }
         <span class="page-chip">14</span>
       </footer>
     </section>
+    <section class="slide content-slide" aria-hidden="true">
+      <div class="panel">
+        <div class="rivet tl"></div><div class="rivet tr"></div>
+        <div class="rivet bl"></div><div class="rivet br"></div>
+        
+      <div class="slide-head">
+        <div class="eyebrow">CHAPTER 03 // ETHICS & DATA</div>
+        <div class="head-row">
+          <h2 class="slide-title" style="font-size:46px">REAL NEWS, USED RESPONSIBLY</h2>
+          <img class="head-icon" src="assets/icons/alert.png" alt="">
+        </div>
+        <div class="rule"></div>
+      </div>
+        <div class="slide-body ">
+          
+      <div class="prep-wrap">
+        <div class="prep-cols">
+          <div class="prep-col reveal" style="--i:0">
+            <div class="prep-bar red">HOW WE USE NEWS</div>
+            <ul>
+              <li>One real story per day from public RSS feeds (BBC, CNN, The Guardian).</li>
+              <li>Content is current, real-world news — not fabricated.</li>
+              <li>We keep short sentence excerpts, not full republished articles.</li>
+              <li>Non-commercial, classroom prototype within a university course.</li>
+            </ul>
+          </div>
+          <div class="prep-col reveal" style="--i:1">
+            <div class="prep-bar green">COPYRIGHT &amp; LICENSE</div>
+            <ul>
+              <li>BBC and other outlets are copyrighted, not open-source.</li>
+              <li>RSS is for personal reading; brief excerpts are low-risk in a student prototype.</li>
+              <li>We do not redistribute full articles or claim ownership.</li>
+              <li>Any public demo uses the shortest excerpts and credits the source.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="why reveal" style="--i:2">REAL NEWS IS THE INPUT — USED IN GOOD FAITH FOR EDUCATION.</div>
+      </div>
+      <aside class="notes">Ethics and data use. The input is real, current news used for a short educational prototype. BBC content is copyrighted, not open-source, so the demo stays non-commercial and credits the source.</aside>
+
+        </div>
+      </div>
+      
+      <footer class="slide-footer">
+        <span>PIXEL ISLE&nbsp;&nbsp;//&nbsp;&nbsp;INT4096&nbsp;&nbsp;//&nbsp;&nbsp;GROUP 2</span>
+        <span>2026-27 SEM 1</span>
+        <span class="page-chip">15</span>
+      </footer>
+    </section>
     <section class="slide section-slide" aria-hidden="true">
       <div class="section-tag">PIXEL ISLE // 001</div>
       <div class="chapter-label">CHAPTER 04 // 04</div>
@@ -1320,7 +1367,7 @@ body.editing .edit-hint { display: block; }
       <div class="spark s1"></div><div class="spark s2"></div><div class="spark s3"></div>
       <footer class="section-footer">
         <span>PIXEL ISLE&nbsp;&nbsp;//&nbsp;&nbsp;INT4096&nbsp;&nbsp;//&nbsp;&nbsp;GROUP 2</span>
-        <span class="page-chip">15</span>
+        <span class="page-chip">16</span>
       </footer>
     <aside class="notes">Timing 15:15-15:30. Chapter break. Now the evidence: comparison table, training curve, confusion matrix.</aside></section>
     <section class="slide content-slide" aria-hidden="true">
@@ -1341,25 +1388,22 @@ body.editing .edit-hint { display: block; }
       <table class="pixel-table reveal">
         <thead><tr><th>METHOD</th><th>MACRO-F1</th><th>KEY-F1</th><th>TOP-3</th><th>TIME</th><th>PARAMS</th></tr></thead>
         <tbody>
-          <tr><td>TF-IDF + Logistic Regression</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
-          <tr><td>LSTM + self-built vocab</td><td class="center">0.709</td><td class="center">0.543</td><td class="center">0.618</td><td class="center">10 min</td><td class="center">5.2M</td></tr>
-          <tr><td>LSTM + RoBERTa tokenizer</td><td class="center">0.736</td><td class="center">0.552</td><td class="center">0.638</td><td class="center">9 min</td><td class="center">6.7M</td></tr>
-          <tr class="best"><td>&gt;&gt; DistilRoBERTa (reference)</td><td class="center">0.798</td><td class="center">0.660</td><td class="center">0.706</td><td class="center">26 min</td><td class="center">82.1M</td></tr>
+          <tr><td>TF-IDF + Logistic Regression (baseline)</td><td class="center">0.653</td><td class="center">0.424</td><td class="center">0.455</td><td class="center">&lt;1 min</td><td class="center">0.39M</td></tr>
+          <tr><td>LSTM + self-built vocab</td><td class="center">0.709</td><td class="center">0.543</td><td class="center">0.618</td><td class="center">8.5 min</td><td class="center">5.2M</td></tr>
+          <tr><td>LSTM + RoBERTa tokenizer</td><td class="center">0.736</td><td class="center">0.552</td><td class="center">0.638</td><td class="center">7.8 min</td><td class="center">6.7M</td></tr>
+          <tr class="best"><td>&gt;&gt; DistilRoBERTa (reference)</td><td class="center">0.806</td><td class="center">0.673</td><td class="center">0.693</td><td class="center">21 min</td><td class="center">82.1M</td></tr>
         </tbody>
       </table>
       <div class="results-chart reveal" style="--i:3">
         
-      <div class="chart-ph" style="background-image:url('assets/ph_bar.png');height:330px">
+      <div class="chart-ph solid" style="height:330px">
         <div class="fig">FIG. 02</div>
-        <div class="chart-plate" style="width:820px">
-          <h3>GROUPED BAR: MODEL VS METRIC</h3>
-          <p>Insert grouped bars for each metric, plus the TF-IDF baseline.</p>
-        </div>
-        <div class="drop">DROP CHART HERE</div>
+        <img class="chart-pic" src="assets/charts/compare_wide.png" alt="FIG. 02">
       </div>
+      
       </div>
-      <div class="source-line">Primary course model: TF-IDF + LogReg. Neural rows are reference comparisons (seed 42). Add baseline scores before presenting.</div>
-      <aside class="notes">Timing 15:30-17:00. The table is the evidence. DistilRoBERTa leads every reported metric, at 82.1M parameters and 26 minutes. The TF-IDF row is TBD: fill it from the final baseline run. The chart placeholder is for the grouped bar visual.</aside>
+      <div class="source-line">Primary course model: TF-IDF + LogReg (baseline). Neural rows are reference comparisons (seed 42).</div>
+      <aside class="notes">Timing 15:30-17:00. The table is the evidence. DistilRoBERTa leads every reported metric, at 82.1M parameters and 21 minutes. The TF-IDF baseline is included as the primary classical model.</aside>
 
         </div>
       </div>
@@ -1367,7 +1411,7 @@ body.editing .edit-hint { display: block; }
       <footer class="slide-footer">
         <span>PIXEL ISLE&nbsp;&nbsp;//&nbsp;&nbsp;INT4096&nbsp;&nbsp;//&nbsp;&nbsp;GROUP 2</span>
         <span>2026-27 SEM 1</span>
-        <span class="page-chip">16</span>
+        <span class="page-chip">17</span>
       </footer>
     </section>
     <section class="slide content-slide" aria-hidden="true">
@@ -1385,32 +1429,14 @@ body.editing .edit-hint { display: block; }
       </div>
         <div class="slide-body ">
           
-      <div class="double-grid">
-        <div class="reveal" style="--i:0">
-          
-      <div class="chart-ph" style="background-image:url('assets/ph_line.png');height:620px">
+      
+      <div class="chart-ph solid" style="height:620px">
         <div class="fig">FIG. 03</div>
-        <div class="chart-plate" style="width:660px">
-          <h3>LOSS + F1 VS EPOCH</h3>
-          <p>Insert training / validation loss and validation macro-F1 by epoch.</p>
-        </div>
-        <div class="drop">DROP CHART HERE</div>
+        <img class="chart-pic" src="assets/charts/training_progress.png" alt="FIG. 03">
       </div>
-          <div class="chart-caption">Insert the exported training log or notebook chart.</div>
-        </div>
-        <div class="side-card reveal" style="--i:1">
-          <div class="bar navy">READ THE CURVE</div>
-          <ul>
-            <li>Training loss decreased during the run.</li>
-            <li>Validation loss fluctuated, especially at epoch 7.</li>
-            <li>Validation F1 rose overall, but not every epoch.</li>
-            <li>Lower training loss did not always mean better validation.</li>
-          </ul>
-          <div class="side-note">BEST CHECKPOINT = HIGHEST VALIDATION MACRO-F1</div>
-          <div class="side-strip">VALIDATION &gt;<br>TRAINING LOSS</div>
-        </div>
-      </div>
-      <aside class="notes">Timing 17:00-17:45. Insert the real loss and macro-F1 curves. The talking point: validation fluctuated around epoch 7, and lower training loss is not automatically better. Mention best-checkpoint selection.</aside>
+      <div class="chart-caption">Train / val loss + validation macro-F1 by epoch (LSTM word · LSTM tok · DistilRoBERTa).</div>
+      <div class="why reveal" style="--i:1">READ THE CURVE: training loss falls, validation loss wobbles, and validation macro-F1 rises overall. Lower training loss is not always better — keep the best validation checkpoint.</div>
+      <aside class="notes">Timing 17:00-17:45. Show the real training curves. Validation loss fluctuates while validation F1 rises; we keep the best validation checkpoint.</aside>
 
         </div>
       </div>
@@ -1418,7 +1444,7 @@ body.editing .edit-hint { display: block; }
       <footer class="slide-footer">
         <span>PIXEL ISLE&nbsp;&nbsp;//&nbsp;&nbsp;INT4096&nbsp;&nbsp;//&nbsp;&nbsp;GROUP 2</span>
         <span>2026-27 SEM 1</span>
-        <span class="page-chip">17</span>
+        <span class="page-chip">18</span>
       </footer>
     </section>
     <section class="slide content-slide" aria-hidden="true">
@@ -1439,20 +1465,16 @@ body.editing .edit-hint { display: block; }
       <div class="double-grid wide-left">
         <div class="reveal" style="--i:0">
           
-      <div class="chart-ph" style="background-image:url('assets/ph_matrix.png');height:620px">
+      <div class="chart-ph solid" style="height:620px">
         <div class="fig">FIG. 04</div>
-        <div class="chart-plate" style="width:620px">
-          <h3>3x3 CONFUSION MATRIX</h3>
-          <p>Rows = true label, columns = predicted. Insert the test-set matrix.</p>
-        </div>
-        <div class="drop">DROP CHART HERE</div>
+        <img class="chart-pic" src="assets/charts/confusion_matrix.png" alt="FIG. 04">
       </div>
-          <div class="chart-caption">Add 2-3 misclassified sentences beside the matrix.</div>
+      <div class="chart-caption">Test-set matrix — TF-IDF + Logistic Regression</div>
         </div>
         <div class="side-card reveal" style="--i:1">
           <div class="bar red">ERROR ANALYSIS</div>
           <ul>
-            <li><b>Evidence is hardest.</b> It overlaps with key sentences and has fewer clear cues.</li>
+            <li><b>Key sentences are hardest.</b> They are rare and sit between filler and evidence, so they are easy to confuse.</li>
             <li><b>Labels are noisy.</b> DeepSeek-assisted labels can be wrong, so scores absorb label error.</li>
             <li><b>Class imbalance.</b> Filler dominates; balanced weights help, but do not erase the problem.</li>
             <li><b>Next step.</b> Inspect top false positives and false negatives, then refine the label guide.</li>
@@ -1461,7 +1483,7 @@ body.editing .edit-hint { display: block; }
           <div class="side-strip">LABEL NOISE = SCORE NOISE</div>
         </div>
       </div>
-      <aside class="notes">Timing 17:45-18:30. The matrix is a placeholder, but the failure modes are known. Evidence is hardest. Labels were LLM-assisted, so label noise is a real limitation. End with concrete error inspection.</aside>
+      <aside class="notes">Timing 17:45-18:30. The matrix shows the test-set result. Key sentences are the hardest class. Labels were LLM-assisted, so label noise is a real limitation. End with concrete error inspection.</aside>
 
         </div>
       </div>
@@ -1469,7 +1491,7 @@ body.editing .edit-hint { display: block; }
       <footer class="slide-footer">
         <span>PIXEL ISLE&nbsp;&nbsp;//&nbsp;&nbsp;INT4096&nbsp;&nbsp;//&nbsp;&nbsp;GROUP 2</span>
         <span>2026-27 SEM 1</span>
-        <span class="page-chip">18</span>
+        <span class="page-chip">19</span>
       </footer>
     </section>
     <section class="slide content-slide" aria-hidden="true">
@@ -1488,7 +1510,7 @@ body.editing .edit-hint { display: block; }
         <div class="slide-body center-body">
           
       <div class="results-grid">
-        <div class="result-card reveal" style="--i:0"><div class="bar green">BEST REPORTED<img src="assets/icons/check.png" alt=""></div><p>DistilRoBERTa: 0.798 macro-F1 and 0.660 key-F1.</p></div>
+        <div class="result-card reveal" style="--i:0"><div class="bar green">BEST REPORTED<img src="assets/icons/check.png" alt=""></div><p>DistilRoBERTa: 0.806 macro-F1 and 0.673 key-F1.</p></div>
         <div class="result-card reveal" style="--i:1"><div class="bar gold">BIGGER MODEL<img src="assets/icons/model.png" alt=""></div><p>82.1M parameters vs 5.2M / 6.7M for the LSTM runs.</p></div>
         <div class="result-card reveal" style="--i:2"><div class="bar red">NOISY LABELS<img src="assets/icons/alert.png" alt=""></div><p>DeepSeek-assisted labels may contain errors that move scores.</p></div>
         <div class="result-card reveal" style="--i:3"><div class="bar navy">ONE SEED<img src="assets/icons/target.png" alt=""></div><p>Single seed; measures sentence classification, not learning gains.</p></div>
@@ -1502,7 +1524,7 @@ body.editing .edit-hint { display: block; }
       <footer class="slide-footer">
         <span>PIXEL ISLE&nbsp;&nbsp;//&nbsp;&nbsp;INT4096&nbsp;&nbsp;//&nbsp;&nbsp;GROUP 2</span>
         <span>2026-27 SEM 1</span>
-        <span class="page-chip">19</span>
+        <span class="page-chip">20</span>
       </footer>
     </section>
     <section class="slide content-slide" aria-hidden="true">
@@ -1534,7 +1556,7 @@ body.editing .edit-hint { display: block; }
       <footer class="slide-footer">
         <span>PIXEL ISLE&nbsp;&nbsp;//&nbsp;&nbsp;INT4096&nbsp;&nbsp;//&nbsp;&nbsp;GROUP 2</span>
         <span>2026-27 SEM 1</span>
-        <span class="page-chip">20</span>
+        <span class="page-chip">21</span>
       </footer>
     </section>
     <section class="slide content-slide" aria-hidden="true">
@@ -1562,7 +1584,7 @@ body.editing .edit-hint { display: block; }
       <footer class="slide-footer">
         <span>PIXEL ISLE&nbsp;&nbsp;//&nbsp;&nbsp;INT4096&nbsp;&nbsp;//&nbsp;&nbsp;GROUP 2</span>
         <span>2026-27 SEM 1</span>
-        <span class="page-chip">21</span>
+        <span class="page-chip">22</span>
       </footer>
     </section>
     <section class="slide content-slide" aria-hidden="true">
@@ -1590,7 +1612,82 @@ body.editing .edit-hint { display: block; }
       <footer class="slide-footer">
         <span>PIXEL ISLE&nbsp;&nbsp;//&nbsp;&nbsp;INT4096&nbsp;&nbsp;//&nbsp;&nbsp;GROUP 2</span>
         <span>2026-27 SEM 1</span>
-        <span class="page-chip">22</span>
+        <span class="page-chip">23</span>
+      </footer>
+    </section>
+    <section class="slide content-slide" aria-hidden="true">
+      <div class="panel">
+        <div class="rivet tl"></div><div class="rivet tr"></div>
+        <div class="rivet bl"></div><div class="rivet br"></div>
+        
+      <div class="slide-head">
+        <div class="eyebrow">CHAPTER 04 // REFLECTION</div>
+        <div class="head-row">
+          <h2 class="slide-title" style="font-size:46px">LIMITATIONS & NEXT STEPS</h2>
+          <img class="head-icon" src="assets/icons/target.png" alt="">
+        </div>
+        <div class="rule"></div>
+      </div>
+        <div class="slide-body ">
+          
+      <div class="prep-wrap">
+        <div class="prep-cols">
+          <div class="prep-col reveal" style="--i:0">
+            <div class="prep-bar red">LIMITATIONS (HONEST)</div>
+            <ul>
+              <li>Single seed (42) — no stability study yet.</li>
+              <li>LLM-assisted labels introduce noise.</li>
+              <li>Scores measure sentence importance, not learning gains.</li>
+            </ul>
+          </div>
+          <div class="prep-col reveal" style="--i:1">
+            <div class="prep-bar green">FUTURE WORK</div>
+            <ul>
+              <li>Make the clues more directly related to the story.</li>
+              <li>Add student history and daily streaks for engagement.</li>
+              <li>Sharpen the news-to-clue mapping (currently not fully focused).</li>
+            </ul>
+          </div>
+        </div>
+        <div class="why reveal" style="--i:2">NEXT ITERATION: THE NEWS SHOULD BE THE MYSTERY, NOT JUST THE BACKDROP.</div>
+      </div>
+      <aside class="notes">Limitations and next steps. Honest limits: one seed, noisy labels, and the metric measures sentence importance not learning. Future work: tie clues closer to the story, add streaks/history, sharpen the news-to-clue mapping.</aside>
+
+        </div>
+      </div>
+      
+      <footer class="slide-footer">
+        <span>PIXEL ISLE&nbsp;&nbsp;//&nbsp;&nbsp;INT4096&nbsp;&nbsp;//&nbsp;&nbsp;GROUP 2</span>
+        <span>2026-27 SEM 1</span>
+        <span class="page-chip">24</span>
+      </footer>
+    </section>
+    <section class="slide content-slide" aria-hidden="true">
+      <div class="panel">
+        <div class="rivet tl"></div><div class="rivet tr"></div>
+        <div class="rivet bl"></div><div class="rivet br"></div>
+        
+      <div class="slide-head">
+        <div class="eyebrow">THE TEAM</div>
+        <div class="head-row">
+          <h2 class="slide-title" style="font-size:48px">SEVEN ROLES, ONE CASE</h2>
+          <img class="head-icon" src="assets/icons/game.png" alt="">
+        </div>
+        <div class="rule"></div>
+      </div>
+        <div class="slide-body ">
+          
+      <div class="role-grid"><div class="role-card reveal" style="--i:0"><div class="bar red">PROJECT LEAD<img src="assets/icons/game.png" alt=""></div><p>Scope, schedule, integration.</p></div><div class="role-card reveal" style="--i:1"><div class="bar gold">GAME DEVELOPER<img src="assets/icons/game.png" alt=""></div><p>Pixel game, scenes, mechanics.</p></div><div class="role-card reveal" style="--i:2"><div class="bar navy">CRAWLER & DATA<img src="assets/icons/news.png" alt=""></div><p>RSS fetch, clean, label, merge.</p></div><div class="role-card reveal" style="--i:3"><div class="bar green">ML ENGINEER<img src="assets/icons/model.png" alt=""></div><p>Baseline + neural models, eval.</p></div><div class="role-card reveal" style="--i:4"><div class="bar gold">FRONTEND / UI<img src="assets/icons/gear.png" alt=""></div><p>Editor, HUD, presentation UI.</p></div><div class="role-card reveal" style="--i:5"><div class="bar red">QA & TESTING<img src="assets/icons/target.png" alt=""></div><p>Pipeline tests, bug hunting.</p></div><div class="role-card reveal" style="--i:6"><div class="bar navy">DOCS & PITCH<img src="assets/icons/book.png" alt=""></div><p>Slides, report, live demo.</p></div></div>
+      <div class="source-line" style="text-align:center; margin-top:22px;">GROUP 2&nbsp;&nbsp;//&nbsp;&nbsp;CHIU WAI YIU · LAI CHUN KUI · LAI WAN YAU SONYA · MAK TSUN WAI MARSIO · WONG CHING WAI · WONG SUI KI · WONG TSZ CHING</div>
+      <aside class="notes">Team slide. Seven members, seven roles. Assign each name to a role before presenting.</aside>
+
+        </div>
+      </div>
+      
+      <footer class="slide-footer">
+        <span>PIXEL ISLE&nbsp;&nbsp;//&nbsp;&nbsp;INT4096&nbsp;&nbsp;//&nbsp;&nbsp;GROUP 2</span>
+        <span>2026-27 SEM 1</span>
+        <span class="page-chip">25</span>
       </footer>
     </section>
 <section class="slide title-slide closing" aria-hidden="true">
@@ -1611,22 +1708,47 @@ body.editing .edit-hint { display: block; }
       <div class="questions">QUESTIONS &gt;&gt;</div>
     </div>
     <div class="closing-end">THE END</div>
-    <div class="title-foot">GROUP 2&nbsp;&nbsp;//&nbsp;&nbsp;[MEMBER NAMES]<br>INT4096 · 2026-27 SEM 1</div>
+    <div class="title-foot">GROUP 2&nbsp;&nbsp;//&nbsp;&nbsp;CHIU WAI YIU · LAI CHUN KUI · LAI WAN YAU SONYA · MAK TSUN WAI MARSIO<br>WONG CHING WAI · WONG SUI KI · WONG TSZ CHING&nbsp;&nbsp;//&nbsp;&nbsp;INT4096 · 2026-27 SEM 1</div>
   </div>
-  <div class="qr-zone">
-    <div class="qr-box"><span>QR CODE<br>DEMO / REPO</span></div>
-    <div class="qr-repo">github.com/Percy-the-train/<br>pixel-isle-for-int4096</div>
-    <div class="qr-scan">SCAN TO PLAY THE CASE</div>
-  </div>
-  <aside class="notes">Close with the three summary lines, then invite questions. Put the demo QR code in the dashed box before presenting.</aside>
+  <aside class="notes">Close with the three summary lines, then invite questions.</aside>
 </section>
+    <section class="slide content-slide" aria-hidden="true">
+      <div class="panel">
+        <div class="rivet tl"></div><div class="rivet tr"></div>
+        <div class="rivet bl"></div><div class="rivet br"></div>
+        
+      <div class="slide-head">
+        <div class="eyebrow">REFERENCES</div>
+        <div class="head-row">
+          <h2 class="slide-title" style="font-size:44px">REFERENCES (APA 7TH)</h2>
+          <img class="head-icon" src="assets/icons/book.png" alt="">
+        </div>
+        <div class="rule"></div>
+      </div>
+        <div class="slide-body ">
+          
+      <div class="prep-cols">
+        <div class="prep-col reveal" style="--i:0"><div style="font-size:16px; line-height:1.3; color:var(--ink-soft); padding:16px 4px;">Hochreiter, S., &amp; Schmidhuber, J. (1997). Long short-term memory. Neural Computation, 9(8), 1735–1780.<br><br>Liu, Y., Ott, M., Goyal, N., Du, J., Joshi, M., Chen, D., Levy, O., Lewis, M., Zettlemoyer, L., &amp; Stoyanov, V. (2019). RoBERTa: A robustly optimized BERT pretraining approach. arXiv:1907.11692.<br><br>Media Technology Monitor. (2024). News Alert, 09-05-2024. https://mtm-otm.ca/</div></div>
+        <div class="prep-col reveal" style="--i:1"><div style="font-size:16px; line-height:1.3; color:var(--ink-soft); padding:16px 4px;">Paszke, A., et al. (2019). PyTorch: An imperative style, high-performance deep learning library. Advances in Neural Information Processing Systems, 32.<br><br>Pedregosa, F., et al. (2011). Scikit-learn: Machine learning in Python. Journal of Machine Learning Research, 12, 2825–2830.<br><br>Sanh, V., Debut, L., Chaumond, J., &amp; Wolf, T. (2019). DistilBERT, a distilled version of BERT: Smaller, faster, cheaper and lighter. arXiv:1910.01108.<br><br>Wolf, T., et al. (2020). Transformers: State-of-the-art natural language processing. arXiv:1910.03771.</div></div>
+      </div>
+      <aside class="notes">References in APA 7 format, citing the statistics source, the models, and the libraries used.</aside>
+
+        </div>
+      </div>
+      
+      <footer class="slide-footer">
+        <span>PIXEL ISLE&nbsp;&nbsp;//&nbsp;&nbsp;INT4096&nbsp;&nbsp;//&nbsp;&nbsp;GROUP 2</span>
+        <span>2026-27 SEM 1</span>
+        <span class="page-chip">26</span>
+      </footer>
+    </section>
   </main>
 </div>
 
 <div class="deck-controls">
   <button id="prevBtn" aria-label="Previous slide">&lt;</button>
   <div class="progress"><div id="progressFill"></div></div>
-  <div class="counter" id="counter">01 / 23</div>
+  <div class="counter" id="counter">01 / 27</div>
   <button id="nextBtn" aria-label="Next slide">&gt;</button>
   <button id="notesBtn" aria-label="Toggle speaker notes">N</button>
 </div>
@@ -1711,7 +1833,7 @@ class PixelDeck {
       s.classList.toggle('visible', idx === this.current);
       s.setAttribute('aria-hidden', idx === this.current ? 'false' : 'true');
     });
-    document.getElementById('counter').textContent = String(this.current + 1).padStart(2, '0') + ' / 23';
+    document.getElementById('counter').textContent = String(this.current + 1).padStart(2, '0') + ' / 27';
     document.getElementById('progressFill').style.width = ((this.current + 1) / this.slides.length * 100) + '%';
     this.updateNotes();
     if (document.body.classList.contains('editing')) this.applyEditing();
