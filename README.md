@@ -70,11 +70,25 @@ pip install transformers datasets streamlit scikit-learn feedparser trafilatura 
 streamlit run app.py
 ```
 
-## The Merge (in progress)
+## The Merge — daily news into the murder case
 
-- [ ] Save the best model (DistilRoBERTa) and an inference script that scores every sentence of a given news article
-- [ ] Fetch one daily BBC story, keep the top-scored key sentences
-- [ ] Rewrite those sentences as coherent in-game clues (murder-mystery framing, grounded in the game's fiction)
-- [ ] Feed clues into `play.html` / `game.js` so each playthrough is built from a real news story
+Every day's BBC top story becomes a playable case:
+
+1. `generate_case.py` fetches the latest BBC story, the **best model (DistilRoBERTa)** scores each sentence and keeps the top key sentences
+2. **DeepSeek** rewrites them into a Pixel Isle case: a fictionalized newspaper article, **5 multiple-choice questions** (one per object in the murder scene: Dead body / Picture / Chair / Bookshelf / Night window), a solution, and scoring keywords
+3. Outputs `case_data.js` at the repo root — the game loads it automatically
+
+**In the game** (murder scene only):
+- The **Papers** object shows the newspaper article
+- Each question object asks its MCQ (press 1-4); correct first answers score
+- "Explain the death" stays as the finale — your typed conclusion is scored against the solution's keywords, then **the truth is revealed**
+
+**Run:**
+```
+cd "news crawler"
+python generate_case.py            # needs venv + DEEPSEEK_API_KEY (env or deepseek_key.txt)
+                                   # needs my_model/ (train_best.py first, once)
+```
+Then just open `index.html` → Play. If `case_data.js` is missing, a placeholder case is used.
 
 See `docs/superpowers/` for design + implementation plans.

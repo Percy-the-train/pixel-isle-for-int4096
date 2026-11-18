@@ -59,6 +59,17 @@
     line-height: 1.45; pointer-events: none;
   }
   #dialogueHint { margin-top: 6px; text-align: right; color: #c9a25c; font-size: 11px; }
+  #articleBox {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.6); cursor: pointer;
+  }
+  #articleInner {
+    background: #efe6d0; color: #2a2418; border: 2px solid #8a6d3b; border-radius: 3px;
+    padding: 14px 16px; width: 72%; max-width: 420px; max-height: 72%; overflow: auto;
+    font-family: Georgia, serif; font-size: 12px; line-height: 1.5; cursor: default;
+  }
+  #articleHeadline { font-weight: bold; font-size: 14px; margin-bottom: 8px; }
+  #articleHint { margin-top: 10px; text-align: right; color: #8a6d3b; font-size: 10px; font-family: monospace; }
 </style>
 </head>
 <body>
@@ -72,6 +83,13 @@
   <div id="dialogue" class="hidden">
     <div id="dialogueText"></div>
     <div id="dialogueHint">E to continue</div>
+  </div>
+  <div id="articleBox" class="hidden">
+    <div id="articleInner">
+      <div id="articleHeadline"></div>
+      <div id="articleText"></div>
+      <div id="articleHint">E or click to put down the paper</div>
+    </div>
   </div>
   <button id="solveBtn" class="hidden">Explain the death</button>
   <select id="lookSelect" class="lookSelect" title="Player look">
@@ -92,11 +110,30 @@
   </div>
   <div id="toast"></div>
 </div>
+<script src="case_data.js"></script>
 <script src="game.js"></script>
 <script>
 (function () {
   "use strict";
   var PI = window.PI;
+
+  var PLACEHOLDER_CASE = {
+    title: "PIXEL ISLE DAILY — placeholder case",
+    article: {
+      headline: "Mysterious death at the lighthouse",
+      text: "This is a placeholder case. Run generate_case.py to turn today's BBC news into a real case. In the meantime, a fictional victim was found at the lighthouse at dawn. Witnesses reported a strange light in the window the night before. The victim's chair held a torn note. A page was missing from the lighthouse ledger on the bookshelf. A picture of the victim and the keeper hangs above the fireplace."
+    },
+    questions: [
+      { object: "Dead body", question: "How did the victim die?", options: ["Fell from the cliff", "Poisoned", "Drowned", "Old age"], answer: 1 },
+      { object: "Picture", question: "Who is in the picture?", options: ["The victim and the keeper", "Two strangers", "The mayor", "Nobody"], answer: 0 },
+      { object: "Chair", question: "What was found on the chair?", options: ["A hat", "A torn note", "A key", "Nothing"], answer: 1 },
+      { object: "Bookshelf", question: "What was missing from the ledger?", options: ["The cover", "A page", "The whole book", "Nothing"], answer: 1 },
+      { object: "Night window", question: "What was seen at night?", options: ["A boat", "A strange light", "A shadow", "Nothing"], answer: 1 }
+    ],
+    solution: "The victim was poisoned — a placeholder solution. Run generate_case.py for a case built from a real BBC story.",
+    key_terms: ["poisoned", "lighthouse", "keeper"]
+  };
+  var CASE = window.CASE || PLACEHOLDER_CASE;
 
   var canvas = document.getElementById("game");
   var TILE = PI.TILE;
@@ -167,8 +204,14 @@
     solved: false,
     answer: "",
     clues: [],
-    seen: {}
+    seen: {},
+    articleRead: false,
+    qDone: {},
+    qCorrect: 0
   };
+
+  var mcq = null;
+  var articleOpen = false;
 
   var doorCooldown = 0;
 
@@ -181,6 +224,10 @@
   var hudCluesEl = document.getElementById("hudClues");
   var dialogueEl = document.getElementById("dialogue");
   var dialogueTextEl = document.getElementById("dialogueText");
+  var dialogueHintEl = document.getElementById("dialogueHint");
+  var articleEl = document.getElementById("articleBox");
+  var articleHeadlineEl = document.getElementById("articleHeadline");
+  var articleTextEl = document.getElementById("articleText");
 
   var toastTimer = null;
   function toast(msg) {
@@ -194,7 +241,15 @@
 
   function updateHUD() {
     hudSceneEl.textContent = isMurder() ? "MURDER SCENE" : "HOME ROOM";
-    hudCluesEl.textContent = isMurder() ? ("Clues: " + investigation.clues.length) : "";
+    if (isMurder()) {
+      var total = CASE.questions.length;
+      var answered = Object.keys(investigation.qDone).length;
+      var read = investigation.articleRead ? " \u00b7 News read" : "";
+      hudCluesEl.textContent = "Questions " + answered + "/" + total + " answered \u00b7 " +
+        investigation.qCorrect + " correct" + read;
+    } else {
+      hudCluesEl.textContent = "";
+    }
   }
 
   function updateDialogueDom() {
@@ -218,7 +273,8 @@
     ent = PI.rebuild(world, npcData);
     player.x = ent.spawn.x; player.y = ent.spawn.y;
     player.dir = "down"; player.moving = false; player.frame = 0;
-    dialogue = null;
+    dialogue = null; mcq = null; articleOpen = false;
+    articleEl.classList.add("hidden");
     updateDialogueDom();
     doorCooldown = 0.5;
     refreshUI();
@@ -238,8 +294,9 @@
   window.addEventListener("keydown", function (e) {
     var k = e.key.toLowerCase();
     var typing = e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT");
-    if (k === "escape") { modal.classList.add("hidden"); keys = {}; return; }
+    if (k === "escape") { modal.classList.add("hidden"); if (articleOpen) closeArticle(); keys = {}; return; }
     if (typing) return;
+    if (mcq && mcq.chosen === null && k >= "1" && k <= "4") { answerMcq(+k - 1); e.preventDefault(); return; }
     if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].indexOf(k) >= 0) e.preventDefault();
     keys[k] = true;
     if (k === "e" || k === "enter" || k === " ") interact();
@@ -295,7 +352,7 @@
   }
 
   function update(dt) {
-    if (dialogue || !modal.classList.contains("hidden")) return;
+    if (dialogue || mcq || articleOpen || !modal.classList.contains("hidden")) return;
     if (doorCooldown > 0) doorCooldown -= dt;
 
     var dx = 0, dy = 0;
@@ -333,8 +390,76 @@
     return null;
   }
 
+  function showQuestion(q) {
+    mcq = { q: q, chosen: null };
+    renderMcqDom();
+  }
+
+  function renderMcqDom() {
+    if (!mcq) return;
+    var q = mcq.q;
+    var txt = "[" + q.object + "] " + q.question + "\n" +
+      q.options.map(function (o, i) { return (i + 1) + ") " + o; }).join("\n");
+    if (mcq.chosen !== null) {
+      var ok = mcq.chosen === q.answer;
+      txt += "\n\n" + (ok ? "\u2713 Correct!" :
+        "\u2717 Wrong \u2014 the answer was " + (q.answer + 1) + ") " + q.options[q.answer] + ".");
+    }
+    dialogueTextEl.textContent = txt;
+    dialogueHintEl.textContent = mcq.chosen === null ? "Press 1-4 to answer" : "E to continue";
+    dialogueEl.classList.remove("hidden");
+  }
+
+  function answerMcq(i) {
+    var q = mcq.q;
+    var ok = i === q.answer;
+    if (ok) investigation.qCorrect++;
+    mcq.chosen = i;
+    renderMcqDom();
+    updateHUD();
+    toast(ok ? "Correct!" : "Wrong answer");
+  }
+
+  function openArticle() {
+    articleOpen = true;
+    articleHeadlineEl.textContent = CASE.article.headline;
+    articleTextEl.textContent = CASE.article.text;
+    articleEl.classList.remove("hidden");
+    if (!investigation.articleRead) {
+      investigation.articleRead = true;
+      toast("You read the news.");
+      updateHUD();
+    }
+  }
+
+  function closeArticle() {
+    articleOpen = false;
+    articleEl.classList.add("hidden");
+  }
+
+  function findQuestionFor(label) {
+    for (var i = 0; i < CASE.questions.length; i++) {
+      var q = CASE.questions[i];
+      if (q.object === label && !investigation.qDone[i]) return i;
+    }
+    return -1;
+  }
+
+  function hasAnswered(label) {
+    for (var j = 0; j < CASE.questions.length; j++)
+      if (CASE.questions[j].object === label && investigation.qDone[j]) return true;
+    return false;
+  }
+
   function interact() {
     if (dialogue) { dialIndex++; if (dialIndex >= dialogue.length) dialogue = null; updateDialogueDom(); return; }
+    if (articleOpen) { closeArticle(); return; }
+    if (mcq) {
+      if (mcq.chosen === null) return;
+      mcq = null;
+      dialogueEl.classList.add("hidden");
+      return;
+    }
     if (modal.classList.contains("hidden") === false) return;
     for (var i = 0; i < ent.npcs.length; i++) {
       var n = ent.npcs[i];
@@ -344,16 +469,18 @@
     if (isMurder()) {
       var obj = findNearInspect(2);
       if (obj) {
-        var ck = obj.x + "," + obj.y;
         var lbl = labelFor(obj.c);
-        if (!investigation.seen[ck]) {
-          investigation.seen[ck] = true;
-          investigation.clues.push(ck);
+        if (lbl === "Papers (rug)") { openArticle(); return; }
+        var qi = findQuestionFor(lbl);
+        if (qi >= 0) {
+          investigation.qDone[qi] = true;
+          investigation.clues.push(obj.x + "," + obj.y);
           updateHUD();
-          toast("Clue found (" + investigation.clues.length + ")");
-          openDialogue(["You examine the " + lbl + ".", "Clue recorded. Clue details are coming soon."]);
-        } else {
+          showQuestion(CASE.questions[qi]);
+        } else if (hasAnswered(lbl)) {
           openDialogue(["You've already examined the " + lbl + "."]);
+        } else {
+          openDialogue(["You examine the " + lbl + ". Nothing of note."]);
         }
         return;
       }
@@ -392,10 +519,20 @@
 
   }
 
+  function scoreKeywords(ans) {
+    var a = norm(ans);
+    var n = 0;
+    for (var i = 0; i < CASE.key_terms.length; i++)
+      if (a.indexOf(norm(CASE.key_terms[i])) >= 0) n++;
+    return n;
+  }
+
   solveBtn.addEventListener("click", function () {
     if (!isMurder()) return;
     keys = {};
-    modalNote.textContent = "Clues found: " + investigation.clues.length + ". Scoring will be added later.";
+    var total = CASE.questions.length;
+    modalNote.textContent = "Questions correct: " + investigation.qCorrect + "/" + total +
+      (investigation.articleRead ? " \u00b7 News read" : " \u00b7 News NOT read");
     answerText.value = investigation.answer || "";
     modal.classList.remove("hidden");
     answerText.focus();
@@ -407,12 +544,22 @@
   document.getElementById("submitAnswer").addEventListener("click", function () {
     var txt = answerText.value.trim();
     if (!txt) { answerText.focus(); return; }
+    var matched = scoreKeywords(txt);
+    var total = CASE.questions.length;
     investigation.answer = txt;
     investigation.solved = true;
     keys = {};
     modal.classList.add("hidden");
-    toast("Conclusion recorded. (Scoring coming later.)");
+    openDialogue([
+      "Your conclusion: \u201c" + txt.slice(0, 70) + (txt.length > 70 ? "\u2026" : "") + "\u201d",
+      "SCORE \u2014 questions " + investigation.qCorrect + "/" + total +
+        " correct \u00b7 answer keywords " + matched + "/" + CASE.key_terms.length,
+      "THE TRUTH: " + CASE.solution,
+      "Case: " + (CASE.title || "today's news")
+    ]);
   });
+
+  articleEl.addEventListener("click", function () { closeArticle(); });
 
   function resize() {
     var s = Math.max(1, Math.floor(Math.min(window.innerWidth / VIEW_W, window.innerHeight / VIEW_H)));

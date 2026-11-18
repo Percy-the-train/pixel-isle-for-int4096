@@ -836,7 +836,7 @@ window.PI = (function () {
   };
 
   /* ---------- storage ---------- */
-  var STORE_KEY = "pixelisle.v3";
+  var STORE_KEY = "pixelisle.v4";
 
   function loadStore() {
     try { return JSON.parse(localStorage.getItem(STORE_KEY)); } catch (e) { return null; }
