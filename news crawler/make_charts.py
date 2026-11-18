@@ -48,6 +48,7 @@ ORDER = ["LSTM (self vocab)", "LSTM (RoBERTa tok)", "DistilRoBERTa"]
 def load():
     d = pd.read_csv(CSV)
     d["model"] = d["name"].map(SHORT)
+    d = d.dropna(subset=["model"])
     d["model"] = pd.Categorical(d["model"], categories=ORDER, ordered=True)
     d = d.sort_values("model").reset_index(drop=True)
     return d
@@ -261,6 +262,41 @@ def overview(d):
     plt.close(fig)
 
 
+def confusion_matrices(fname, d):
+    """FIG.04 — test-set confusion matrices for the three neural models."""
+    from sklearn.metrics import confusion_matrix
+    files = {"LSTM (self vocab)": "preds_word.csv",
+             "LSTM (RoBERTa tok)": "preds_tok.csv",
+             "DistilRoBERTa": "preds_tf.csv"}
+    present = {k: f for k, f in files.items() if os.path.exists(f)}
+    if not present:
+        print("[skip] no preds_*.csv -> confusion-matrix chart not generated "
+              "(re-run training that saves predictions).")
+        return False
+    fig, axes = plt.subplots(1, len(present), figsize=(5.2 * len(present), 4.4))
+    if len(present) == 1:
+        axes = [axes]
+    class_names = ["filler", "key", "evidence"]
+    for ax, (name, f) in zip(axes, present.items()):
+        p = pd.read_csv(f)
+        cm = confusion_matrix(p["true"], p["pred"], labels=[0, 1, 2])
+        mf1 = d.loc[d["model"] == name, "macro_f1"].iloc[0]
+        im = ax.imshow(cm, cmap="Blues", vmin=0)
+        ax.set_xticks([0, 1, 2]); ax.set_xticklabels(class_names)
+        ax.set_yticks([0, 1, 2]); ax.set_yticklabels(class_names)
+        ax.set_xlabel("predicted"); ax.set_ylabel("true")
+        ax.set_title(f"{name}\n(macro-F1 {mf1:.3f})", fontsize=11)
+        for i in range(3):
+            for j in range(3):
+                ax.text(j, i, f"{cm[i, j]:,}", ha="center", va="center",
+                        fontsize=10, color="white" if cm[i, j] > cm.max() / 2 else "#1a1a1a")
+    fig.suptitle("Confusion matrices — test set", fontsize=13, fontweight="bold")
+    fig.tight_layout(rect=[0, 0, 1, 0.94])
+    fig.savefig(os.path.join(OUT, fname), bbox_inches="tight")
+    plt.close(fig)
+    return True
+
+
 def main():
     d = load()
     win = d.loc[d["macro_f1"].idxmax(), "model"]
@@ -275,6 +311,7 @@ def main():
     radar(d, "radar.png")
     dataset_chart("dataset_distribution.png")
     training_progress("training_progress.png")
+    confusion_matrices("neural_confusion.png", d)
     overview(d)
     print("charts written to", OUT)
 
