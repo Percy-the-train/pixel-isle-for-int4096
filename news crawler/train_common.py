@@ -158,6 +158,8 @@ def train_lstm(c, bundle, seed, chart, status, save):
     prob = torch.softmax(lstm_logits(model, Xte), -1).numpy()
     _, tp = eval_lstm(model, Xte, yte, plain)
     if save: torch.save(dict(state=state, cfg=c), "lstm_best.pt")
+    if hist:
+        pd.DataFrame(hist).to_csv(f"history_{c['mode']}.csv", index=False)
     return dict(f1=f1_score(yte.numpy(), tp, average="macro"), best_val=best,
                 y=yte.numpy(), p=tp, prob=prob)
 
@@ -248,6 +250,8 @@ def train_tf(c, csv, seed, chart, status, save):
     if save:
         t.drop(columns=["a", "b", "prev", "next"]).to_csv("test_predictions.csv", index=False, encoding="utf-8-sig")
         model.save_pretrained("my_model"); tk.save_pretrained("my_model")
+    if hist:
+        pd.DataFrame(hist).to_csv(f"history_{c['mode']}.csv", index=False)
     return dict(f1=f1_score(yt, yp, average="macro"), best_val=best, y=yt, p=yp,
                 prob=prob, extra=extra)
 
