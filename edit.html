@@ -86,7 +86,10 @@
   <h3>Save / Load</h3>
   <textarea id="jsonArea" placeholder="Scene data (JSON)"></textarea>
   <div class="row">
-    <button id="exportBtn">Export</button>
+    <button id="exportBtn">Export all</button>
+    <button id="exportCurrentBtn">Export current</button>
+  </div>
+  <div class="row">
     <button id="importBtn">Import</button>
     <button id="resetBtn">Reset</button>
   </div>
@@ -402,8 +405,16 @@
   });
 
   document.getElementById("exportBtn").addEventListener("click", function () {
-    saveCurrentScene();
+    var name = document.getElementById("sceneSelect").value || currentScene;
+    currentScene = name;
+    scenes[name] = PI.worldToRows(world);
     document.getElementById("jsonArea").value = JSON.stringify({ scenes: scenes, current: currentScene, npcData: npcData, signData: signData });
+  });
+  document.getElementById("exportCurrentBtn").addEventListener("click", function () {
+    var name = document.getElementById("sceneSelect").value || currentScene;
+    currentScene = name;
+    scenes[name] = PI.worldToRows(world);
+    document.getElementById("jsonArea").value = JSON.stringify({ name: name, rows: scenes[name] });
   });
   document.getElementById("importBtn").addEventListener("click", function () {
     try {
