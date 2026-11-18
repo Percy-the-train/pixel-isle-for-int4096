@@ -33,16 +33,18 @@ plt.rcParams.update({
 })
 
 SHORT = {
+    "TF-IDF + Logistic Regression (baseline)": "TF-IDF + LogReg (baseline)",
     "LSTM 自建詞表 (word)": "LSTM (self vocab)",
     "LSTM + RoBERTa tokenizer (tok)": "LSTM (RoBERTa tok)",
     "DistilRoBERTa 微調 (tf)": "DistilRoBERTa",
 }
 COLOR = {
+    "TF-IDF + LogReg (baseline)": "#8a8a8a",
     "LSTM (self vocab)": "#4c78a8",
     "LSTM (RoBERTa tok)": "#54a24b",
     "DistilRoBERTa": "#d9534f",
 }
-ORDER = ["LSTM (self vocab)", "LSTM (RoBERTa tok)", "DistilRoBERTa"]
+ORDER = ["TF-IDF + LogReg (baseline)", "LSTM (self vocab)", "LSTM (RoBERTa tok)", "DistilRoBERTa"]
 
 
 def load():
@@ -101,7 +103,8 @@ def grouped_multicolor(d, cols, labels, title, ylabel, fname):
     x = np.arange(len(d))
     n = len(cols)
     w = 0.8 / n
-    shades = {"LSTM (self vocab)": ["#7fa2cc", "#4c78a8"],
+    shades = {"TF-IDF + LogReg (baseline)": ["#b5b5b5", "#8a8a8a"],
+              "LSTM (self vocab)": ["#7fa2cc", "#4c78a8"],
               "LSTM (RoBERTa tok)": ["#86c476", "#54a24b"],
               "DistilRoBERTa": ["#e8908c", "#d9534f"]}
     for j, (c, lab) in enumerate(zip(cols, labels)):
@@ -214,6 +217,56 @@ def training_progress(fname):
     return True
 
 
+def label_distribution_chart(fname):
+    if not os.path.exists(DATA):
+        return
+    dd = pd.read_csv(DATA, low_memory=False)
+    counts = dd["sentence_label"].value_counts().sort_index()
+    names = ["0 filler", "1 key", "2 evidence"]
+    colors = ["#9aa5b1", "#f2a33c", "#4c78a8"]
+    vals = [int(counts.get(i, 0)) for i in range(3)]
+    fig, ax = plt.subplots(figsize=(6.2, 4.4))
+    bars = ax.bar(names, vals, color=colors, width=0.5)
+    ax.set_title("Label distribution (n = %d sentences)" % len(dd))
+    ax.set_ylabel("count")
+    for b, v in zip(bars, vals):
+        ax.text(b.get_x() + b.get_width() / 2, b.get_height() + len(dd) * 0.005,
+                f"{v:,}", ha="center", va="bottom", fontsize=12)
+    ax.grid(axis="y", linestyle="--", alpha=0.35)
+    fig.tight_layout()
+    fig.savefig(os.path.join(OUT, fname), bbox_inches="tight")
+    plt.close(fig)
+
+
+def compare_wide_chart(d, fname):
+    metrics = [("Macro-F1", "macro_f1"), ("Key-F1", "f1_1"),
+               ("Binary-F1", "binary"), ("Top-3", "top3")]
+    shade = {"TF-IDF + LogReg (baseline)": ["#b5b5b5", "#8a8a8a", "#707070", "#565656"],
+             "LSTM (self vocab)": ["#7fa2cc", "#4c78a8", "#3c5f86", "#2f4b6b"],
+             "LSTM (RoBERTa tok)": ["#86c476", "#54a24b", "#3f7d38", "#2f5f2a"],
+             "DistilRoBERTa": ["#e8908c", "#d9534f", "#b83a36", "#8f2b28"]}
+    fig, ax = plt.subplots(figsize=(12, 2.4))
+    x = np.arange(len(d))
+    n = len(metrics)
+    w = 0.8 / n
+    for j, (lab, col) in enumerate(metrics):
+        off = x - w * (n - 1) / 2 + j * w
+        cols = [shade[m][j] for m in d["model"]]
+        bars = ax.bar(off, d[col], w, label=lab, color=cols)
+        for b, v in zip(bars, d[col]):
+            ax.text(b.get_x() + b.get_width() / 2, b.get_height() + 0.006,
+                    f"{v:.2f}", ha="center", va="bottom", fontsize=10)
+    ax.set_xticks(x)
+    ax.set_xticklabels(d["model"])
+    ax.set_ylim(0, d[[m[1] for m in metrics]].max().max() * 1.18)
+    ax.set_title("Model comparison across metrics (higher is better)")
+    ax.legend(ncol=n, loc="upper left", frameon=False, fontsize=11)
+    ax.grid(axis="y", linestyle="--", alpha=0.35)
+    fig.tight_layout()
+    fig.savefig(os.path.join(OUT, fname), bbox_inches="tight")
+    plt.close(fig)
+
+
 def overview(d):
     fig, axes = plt.subplots(2, 2, figsize=(12, 8))
     x = np.arange(len(d))
@@ -310,6 +363,8 @@ def main():
     scatter(d, "params_vs_f1.png")
     radar(d, "radar.png")
     dataset_chart("dataset_distribution.png")
+    label_distribution_chart("label_distribution.png")
+    compare_wide_chart(d, "compare_wide.png")
     training_progress("training_progress.png")
     confusion_matrices("neural_confusion.png", d)
     overview(d)

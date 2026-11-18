@@ -772,10 +772,10 @@ for c, h in enumerate(headers):
     cell_style(table.cell(0, c), h, font=PRESS, size=9, color=GOLD, fill=INK,
                align=PP_ALIGN.LEFT if c == 0 else PP_ALIGN.CENTER)
 rows_data = [
-    ("TF-IDF + Logistic Regression (baseline)", "0.654", "0.424", "0.457", "<1 min", "0.39M", CREAM_LIGHT, False),
-    ("LSTM + self-built vocab", "0.709", "0.543", "0.618", "10 min", "5.2M", CREAM_LIGHT, False),
-    ("LSTM + RoBERTa tokenizer", "0.736", "0.552", "0.638", "9 min", "6.7M", CREAM_LIGHT, False),
-    (">> DistilRoBERTa (reference)", "0.798", "0.660", "0.706", "26 min", "82.1M", CREAM_DARK, True),
+    ("TF-IDF + Logistic Regression (baseline)", "0.653", "0.424", "0.455", "<1 min", "0.39M", CREAM_LIGHT, False),
+    ("LSTM + self-built vocab", "0.709", "0.543", "0.618", "8.5 min", "5.2M", CREAM_LIGHT, False),
+    ("LSTM + RoBERTa tokenizer", "0.736", "0.552", "0.638", "7.8 min", "6.7M", CREAM_LIGHT, False),
+    (">> DistilRoBERTa (reference)", "0.806", "0.673", "0.693", "21 min", "82.1M", CREAM_DARK, True),
 ]
 for r, (name, a, b, c, d, e, fill, best) in enumerate(rows_data, start=1):
     cell_style(table.cell(r, 0), name, font=BODY, size=17 if r > 1 else 15,
@@ -791,21 +791,12 @@ notes(s, "Timing 15:30-17:00. The table is the evidence. DistilRoBERTa leads on 
 
 # ---------------------------------------------------------------- 17 TRAINING CURVE
 s = content_slide(prs, "CHAPTER 04 // RESULTS", "TRAINING CURVE: WHAT TO WATCH", icon="chart", page=17)
-chart_placeholder(s, 0.78, 1.8, 7.55, 4.48, "FIG. 03", "LOSS + F1 VS EPOCH",
-                  "Insert training / validation loss and validation macro-F1 by epoch.",
-                  kind="line")
-note_card(s, 8.58, 1.8, 3.92, 4.48, "READ THE CURVE", "", accent=NAVY, title_size=9)
-bullets(s, 8.78, 2.42, 3.55, 3.2, [
-    "Training loss decreased during the run.",
-    "Validation loss fluctuated, especially at epoch 7.",
-    "Validation F1 rose overall, but not every epoch.",
-    "Lower training loss did not always mean better validation.",
-], size=17, gap=7, bullet_color=GOLD_DARK)
-rect(s, 8.78, 5.3, 3.52, 0.7, fill=INK, line=None)
-text_box(s, "VALIDATION >\nTRAINING LOSS", 8.78, 5.43, 3.52, 0.46, font=PRESS, size=8, color=GOLD,
-         align=PP_ALIGN.CENTER, spacing=1.15)
-text_box(s, "Insert the exported training log or notebook chart.", 0.8, 6.4, 7.5, 0.26, font=BODY, size=13, color=MUTED)
-notes(s, "Timing 17:00-17:45. The training curve is a placeholder: insert the real loss and macro-F1 curves. The talking point is already on the right: validation fluctuated, especially around epoch 7, and lower training loss is not automatically better. This is a good place to mention early stopping / best-checkpoint selection.")
+chart_image(s, 0.78, 1.78, 11.72, 3.0, "training_progress.png",
+            caption="Train / val loss + validation macro-F1 by epoch (LSTM word · LSTM tok · DistilRoBERTa).")
+note_card(s, 0.78, 5.05, 11.72, 1.45, "READ THE CURVE",
+          "Training loss falls; validation loss wobbles; validation macro-F1 rises overall. Lower training loss does not always mean better validation.",
+          accent=NAVY, title_size=9, body_size=17)
+notes(s, "Timing 17:00-17:45. Show the real training curves. The talking point: validation loss fluctuates across epochs while validation F1 rises overall, and lower training loss is not automatically better — which is why we keep the best validation checkpoint (early stopping / best-checkpoint selection).")
 
 # ---------------------------------------------------------------- 18 ERROR ANALYSIS
 s = content_slide(prs, "CHAPTER 04 // RESULTS", "WHERE THE MODEL STILL STRUGGLES", icon="alert", page=18)
@@ -813,7 +804,7 @@ chart_image(s, 0.78, 1.8, 5.85, 4.48, "confusion_matrix.png",
             caption="Test-set matrix — TF-IDF + Logistic Regression")
 note_card(s, 6.95, 1.8, 5.55, 4.48, "ERROR ANALYSIS", "", accent=RED, title_size=9)
 bullets(s, 7.15, 2.42, 5.15, 3.0, [
-    ("Evidence is hardest. ", "It overlaps with key sentences and has fewer clear cues."),
+    ("Key sentences are hardest. ", "They are rare and sit between filler and evidence, so they are easy to confuse."),
     ("Labels are noisy. ", "DeepSeek-assisted labels can be wrong, so scores absorb label error."),
     ("Class imbalance. ", "Filler dominates; balanced weights help, but do not erase the problem."),
     ("Next step. ", "Inspect top false positives and false negatives, then refine the label guide."),
