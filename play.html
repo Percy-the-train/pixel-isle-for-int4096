@@ -111,6 +111,7 @@
   <div id="toast"></div>
 </div>
 <script src="case_data.js"></script>
+<script src="case_demo.js"></script>
 <script src="game.js"></script>
 <script>
 (function () {
@@ -134,6 +135,8 @@
     key_terms: ["poisoned", "lighthouse", "keeper"]
   };
   var CASE = window.CASE || PLACEHOLDER_CASE;
+  var IS_DEMO = location.search.indexOf("demo") >= 0;
+  if (IS_DEMO && window.CASE_DEMO) CASE = window.CASE_DEMO;
 
   var canvas = document.getElementById("game");
   var TILE = PI.TILE;
@@ -240,7 +243,7 @@
   function isMurder() { return current === murderName; }
 
   function updateHUD() {
-    hudSceneEl.textContent = isMurder() ? "MURDER SCENE" : "HOME ROOM";
+    hudSceneEl.textContent = isMurder() ? ("MURDER SCENE" + (IS_DEMO ? " (DEMO)" : "")) : "HOME ROOM";
     if (isMurder()) {
       var total = CASE.questions.length;
       var answered = Object.keys(investigation.qDone).length;
