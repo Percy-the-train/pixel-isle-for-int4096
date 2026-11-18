@@ -420,14 +420,21 @@
     } catch (e) { alert("Import failed: " + e.message); }
   });
   document.getElementById("resetBtn").addEventListener("click", function () {
-    if (!confirm("Reset all scenes to the default room and island?")) return;
-    scenes = {
-      "Holmes Study": PI.worldToRows(PI.buildHolmesWorld()),
-      "Island": PI.worldToRows(PI.buildIslandWorld())
-    };
-    npcData = PI.defaultNpcData();
-    signData = PI.defaultSignData();
-    loadScene("Holmes Study");
+    if (!confirm("Reset all scenes to the bundled default scenes (Home Room + murder scene)?")) return;
+    if (PI.DEFAULT_SCENES) {
+      scenes = JSON.parse(JSON.stringify(PI.DEFAULT_SCENES.scenes));
+      npcData = JSON.parse(JSON.stringify(PI.DEFAULT_SCENES.npcData));
+      signData = JSON.parse(JSON.stringify(PI.DEFAULT_SCENES.signData));
+      loadScene(PI.DEFAULT_SCENES.current || Object.keys(scenes)[0]);
+    } else {
+      scenes = {
+        "Holmes Study": PI.worldToRows(PI.buildHolmesWorld()),
+        "Island": PI.worldToRows(PI.buildIslandWorld())
+      };
+      npcData = PI.defaultNpcData();
+      signData = PI.defaultSignData();
+      loadScene("Holmes Study");
+    }
   });
 
   buildPalette();

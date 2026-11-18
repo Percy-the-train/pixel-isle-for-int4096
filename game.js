@@ -766,6 +766,75 @@ window.PI = (function () {
     return { "6,21": "Welcome to Pixel Isle! Collect every coin and the door to the north-east will unlock." };
   }
 
+  var DEFAULT_SCENES = {
+    current: "Home Room",
+    scenes: {
+      "Home Room": [
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvv#KKccccc####OOOOOO##vvvvvvvvvvv",
+        "vvvvvvvvvvv#FFFFFFFFFFFFFFFFFF#vvvvvvvvvvv",
+        "vvvvvvvvvvv#FFFFFFFFFFFFFFFFFF#vvvvvvvvvvv",
+        "vvvvvvvvvvv#FFFFFFFBFFFAFFFFFF#vvvvvvvvvvv",
+        "vvvvvvvvvvv#FjjFuuuuuuuuuuFFFFLvvvvvvvvvvv",
+        "vvvvvvvvvvv#FnjFuuuuuuuuupFFFFLvvvvvvvvvvv",
+        "vvvvvvvvvvv#FjjFuuuuuuuuuuFFFFLvvvvvvvvvvv",
+        "vvvvvvvvvvv#FjlFupuuuuuuuuFFFFLvvvvvvvvvvv",
+        "vvvvvvvvvvv#FjjFuuuuuuuuuuFFFFLvvvvvvvvvvv",
+        "vvvvvvvvvvv#FFtFFFFFFFFFFNFFFF#vvvvvvvvvvv",
+        "vvvvvvvvvvv#FFFFFFFFFXFFFFFFFF#vvvvvvvvvvv",
+        "vvvvvvvvvvv#FFFFFFFFFFFFFFFFFF#vvvvvvvvvvv",
+        "vvvvvvvvvvv##########D#########vvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      ],
+      "muder sence": [
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "v#####I###OOO######vvvvvvvvvvvvvvvvvvvvvvv",
+        "v#FFFFFFFFFFFAFFFF#vvvvvvvvvvvvvvvvvvvvvvv",
+        "vLFFFFFFFFFFFFFFFF#vvvvvvvvvvvvvvvvvvvvvvv",
+        "vLFFFFFFFuuuuFFFFF#vvvvvvvvvvvvvvvvvvvvvvv",
+        "vLFFFFFdFpuuuFFFFF#vvvvvvvvvvvvvvvvvvvvvvv",
+        "vLFFFFFFFuuuuFFFFF#vvvvvvvvvvvvvvvvvvvvvvv",
+        "vLFFFFFFFuuupFFFFF#vvvvvvvvvvvvvvvvvvvvvvv",
+        "v#FFFFFFFuuuuFFFFF#vvvvvvvvvvvvvvvvvvvvvvv",
+        "v#FFFFFFFFFFFFFFFF#vvvvvvvvvvvvvvvvvvvvvvv",
+        "v#FFFFFXFFFFFFFFFF#vvvvvvvvvvvvvvvvvvvvvvv",
+        "v######D###########vvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      ]
+    },
+    npcData: {
+      "10,17": ["Oh, hello traveller!", "The old door to the north-east is locked.", "Gather every coin on the island and it will open."],
+      "30,20": ["Lovely weather for a stroll!", "Find all the coins to unlock the door."],
+      "30,16": ["Good evening. I am Mr. Holmes.", "Welcome to my study.", "Find the clues (coins) and the south door will open."],
+      "25,14": ["Hello there!"],
+      "25,15": ["Hello there!"],
+      "13,6": ["Hello there!"]
+    },
+    signData: { "6,21": "Welcome to Pixel Isle! Collect every coin and the door to the north-east will unlock." }
+  };
+
   /* ---------- storage ---------- */
   var STORE_KEY = "pixelisle.v3";
 
@@ -782,26 +851,19 @@ window.PI = (function () {
   }
 
   function initStore() {
-    var island = worldToRows(buildIslandWorld());
-    var holmes = worldToRows(buildHolmesWorld());
     var store = loadStore();
     var scenes, current, npcData, signData;
-    if (store && store.scenes) {
+    if (store && store.scenes && Object.keys(store.scenes).length) {
       scenes = store.scenes;
-      if (!scenes["Holmes Study"]) scenes["Holmes Study"] = holmes;
-      if (!scenes["Island"]) scenes["Island"] = island;
-      current = (store.current && scenes[store.current]) ? store.current : "Holmes Study";
-      if (current === "Main") current = "Holmes Study";
+      current = (store.current && scenes[store.current]) ? store.current : Object.keys(scenes)[0];
       npcData = store.npcData || {};
       signData = store.signData || {};
     } else {
-      scenes = { "Holmes Study": holmes, "Island": island };
-      current = "Holmes Study";
-      npcData = defaultNpcData();
-      signData = defaultSignData();
+      scenes = JSON.parse(JSON.stringify(DEFAULT_SCENES.scenes));
+      current = DEFAULT_SCENES.current;
+      npcData = JSON.parse(JSON.stringify(DEFAULT_SCENES.npcData));
+      signData = JSON.parse(JSON.stringify(DEFAULT_SCENES.signData));
     }
-    if (!npcData["30,16"]) npcData["30,16"] = ["Good evening. I am Mr. Holmes.", "Welcome to my study.", "Find the clues (coins) and the south door will open."];
-    if (!signData["6,21"]) signData["6,21"] = "Welcome to Pixel Isle!";
     return { scenes: scenes, currentScene: current, npcData: npcData, signData: signData };
   }
 
@@ -1033,6 +1095,7 @@ window.PI = (function () {
     holmesNpc: holmesNpc,
     grassTiles: grassTiles,
     CATALOG: CATALOG,
+    DEFAULT_SCENES: DEFAULT_SCENES,
     RAW: RAW,
     SOLID_BASE: SOLID_BASE,
     OVERLAY: OVERLAY,
